@@ -1,6 +1,7 @@
 package model
 
 type VirtualHost struct {
+	Id      string `yaml:"id" json:"id" toml:"id"`                   // ID全局唯一
 	Name    string `yaml:"name" json:"name" toml:"name"`             // 不带特殊字符的名称，全局唯一
 	Domain  string `yaml:"domain" json:"domain" toml:"domain"`       // 虚拟主机域名
 	Root    string `yaml:"root" json:"root" toml:"root"`             // 项目根目录（本地机器目录），用于docker的volumes映射

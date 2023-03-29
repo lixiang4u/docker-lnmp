@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -9,11 +10,13 @@ import (
 	"github.com/tufanbarisyildirim/gonginx"
 	"github.com/tufanbarisyildirim/gonginx/parser"
 	"gopkg.in/yaml.v3"
+	"io"
 	"io/fs"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type HostController struct {
@@ -44,14 +47,14 @@ func (x HostController) List(ctx *gin.Context) {
 	})
 }
 func (x HostController) Show(ctx *gin.Context) {
-	var domain = ctx.Param("domain")
+	var id = ctx.Param("id")
 	err := x.initVirtualHost()
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
 	for _, h := range viper.Get("hosts").([]model.VirtualHost) {
-		if h.Domain == domain {
+		if h.Id == id {
 			ctx.JSON(http.StatusOK, gin.H{
 				"code": 200,
 				"msg":  nil,
@@ -63,12 +66,21 @@ func (x HostController) Show(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "未找到配置", "data": nil})
 }
 func (x HostController) Update(ctx *gin.Context) {
-	var domain = ctx.Param("domain")
+	var id = ctx.Param("id")
+	var domain = ctx.PostForm("domain")
 	var name = ctx.PostForm("name")
 	var root = ctx.PostForm("root")
 	var webRoot = ctx.PostForm("web_root")
 
 	// 校验domain/root/web_root等参数格式
+	if !strings.Contains(domain, ".") {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "域名格式错误", "data": domain})
+		return
+	}
+	if strings.TrimSpace(root) == "" {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "项目跟路径错误", "data": nil})
+		return
+	}
 
 	err := x.initVirtualHost()
 	if err != nil {
@@ -77,13 +89,14 @@ func (x HostController) Update(ctx *gin.Context) {
 	}
 	var findUpdate = false
 	var hosts = viper.Get("hosts").([]model.VirtualHost)
-	for _, h := range hosts {
-		if h.Domain == domain {
+	for i, h := range hosts {
+		if h.Id == id {
 			findUpdate = true
 			h.Name = name
 			h.Domain = domain
 			h.Root = root
 			h.WebRoot = webRoot
+			hosts[i] = h
 		}
 	}
 	if !findUpdate {
@@ -104,6 +117,14 @@ func (x HostController) Create(ctx *gin.Context) {
 	var webRoot = ctx.PostForm("web_root")
 
 	// 校验domain/root/web_root等参数格式
+	if !strings.Contains(domain, ".") {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "域名格式错误", "data": domain})
+		return
+	}
+	if strings.TrimSpace(root) == "" {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "项目跟路径错误", "data": nil})
+		return
+	}
 
 	err := x.initVirtualHost()
 	if err != nil {
@@ -118,6 +139,7 @@ func (x HostController) Create(ctx *gin.Context) {
 		}
 	}
 	hosts = append(hosts, model.VirtualHost{
+		Id:      x.hash(domain),
 		Name:    name,
 		Domain:  domain,
 		Root:    root,
@@ -132,7 +154,7 @@ func (x HostController) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "配置已经添加，请重启服务", "data": nil})
 }
 func (x HostController) Delete(ctx *gin.Context) {
-	var domain = ctx.Param("domain")
+	var id = ctx.Param("id")
 	err := x.initVirtualHost()
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
@@ -140,11 +162,12 @@ func (x HostController) Delete(ctx *gin.Context) {
 	}
 	var newHosts []model.VirtualHost
 	for _, h := range viper.Get("hosts").([]model.VirtualHost) {
-		if h.Domain == domain {
+		if h.Id == id {
 			continue
 		}
 		newHosts = append(newHosts, h)
 	}
+	log.Println(x.toJson(newHosts))
 	viper.Set("hosts", newHosts)
 	err = viper.WriteConfig()
 	if err != nil {
@@ -152,17 +175,6 @@ func (x HostController) Delete(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "已经删除配置", "data": nil})
-}
-
-func (x HostController) parseYAML() error {
-	//file, err := os.Open("")
-	//if err != nil {
-	//	return err
-	//}
-	//decoder := yaml.NewDecoder(file)
-	//decoder.
-
-	return nil
 }
 
 func (x HostController) initConfig() model.DockerComposeTpl {
@@ -333,6 +345,7 @@ func (x HostController) initVirtualHost() error {
 	}
 	var hosts = []model.VirtualHost{
 		{
+			Id:      x.hash("default.me"),
 			Name:    "default",
 			Domain:  "default.me",
 			Root:    filepath.Join(x.currentDirectory(), "dockerfile/nginx/html"),
@@ -350,4 +363,13 @@ func (x HostController) initVirtualHost() error {
 		return err
 	}
 	return nil
+}
+
+func (x HostController) hash(s string) string {
+	var md5Hash = md5.New()
+	_, err := io.WriteString(md5Hash, s)
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf("%x", md5Hash.Sum(nil))[:8]
 }

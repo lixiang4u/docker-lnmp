@@ -10,6 +10,26 @@ const router = createRouter({
       component: ListView
     },
     {
+      path: '/host/list',
+      name: 'hostList',
+      component: () => import('../views/host/ListView.vue')
+    },
+    {
+      path: '/host/show/:domain',
+      name: 'hostShow',
+      component: () => import('../views/host/ShowView.vue')
+    },
+    {
+      path: '/host/create',
+      name: 'hostCreate',
+      component: () => import('../views/host/ShowView.vue')
+    },
+    {
+      path: '/host/update/:domain',
+      name: 'hostUpdate',
+      component: () => import('../views/host/ShowView.vue')
+    },
+    {
       path: '/about',
       name: 'about',
       // route level code-splitting
