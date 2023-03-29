@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/lixiang4u/docker-lnmp/model"
+	"github.com/spf13/viper"
 	"github.com/tufanbarisyildirim/gonginx"
 	"github.com/tufanbarisyildirim/gonginx/parser"
 	"gopkg.in/yaml.v3"
-	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -131,47 +131,126 @@ func (x HostController) Init(ctx *gin.Context) {
 }
 
 func (x HostController) List(ctx *gin.Context) {
-	file, err := os.Open("D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\docker-compose.yaml")
+	err := x.initVirtualHost()
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
-	bs, err := io.ReadAll(file)
+	ctx.JSON(http.StatusOK, gin.H{
+		"code": 200,
+		"msg":  nil,
+		"data": viper.Get("hosts").([]model.VirtualHost),
+	})
+}
+func (x HostController) Show(ctx *gin.Context) {
+	var domain = ctx.Param("domain")
+	err := x.initVirtualHost()
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
-	m := make(map[string]interface{})
-	err = yaml.Unmarshal(bs, &m)
-	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
-		return
+	for _, h := range viper.Get("hosts").([]model.VirtualHost) {
+		if h.Domain == domain {
+			ctx.JSON(http.StatusOK, gin.H{
+				"code": 200,
+				"msg":  nil,
+				"data": h,
+			})
+			return
+		}
 	}
-	log.Printf("[=====>1 ]%#v", m)
+	ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "未找到配置", "data": nil})
+}
+func (x HostController) Update(ctx *gin.Context) {
+	var domain = ctx.Param("domain")
+	var name = ctx.PostForm("name")
+	var root = ctx.PostForm("root")
+	var webRoot = ctx.PostForm("web_root")
 
-	bs, err = json.MarshalIndent(m, "", "\t")
+	// 校验domain/root/web_root等参数格式
+
+	err := x.initVirtualHost()
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
-	log.Printf("[=====>2 ] %s", string(bs))
+	var findUpdate = false
+	var hosts = viper.Get("hosts").([]model.VirtualHost)
+	for _, h := range hosts {
+		if h.Domain == domain {
+			findUpdate = true
+			h.Name = name
+			h.Domain = domain
+			h.Root = root
+			h.WebRoot = webRoot
+		}
+	}
+	if !findUpdate {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "修改配置存在", "data": nil})
+		return
+	}
+	viper.Set("hosts", hosts)
+	err = viper.WriteConfig()
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+	}
+	ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "配置已经修改，请重启服务", "data": nil})
+}
+func (x HostController) Create(ctx *gin.Context) {
+	var name = ctx.PostForm("name")
+	var domain = ctx.PostForm("domain")
+	var root = ctx.PostForm("root")
+	var webRoot = ctx.PostForm("web_root")
 
-	//ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": nil, "data": string(bs)})
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": nil, "data": m})
+	// 校验domain/root/web_root等参数格式
 
-	return
+	err := x.initVirtualHost()
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+		return
+	}
+	var hosts = viper.Get("hosts").([]model.VirtualHost)
+	for _, h := range hosts {
+		if h.Domain == domain {
+			ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "域名已经存在", "data": nil})
+			return
+		}
+	}
+	hosts = append(hosts, model.VirtualHost{
+		Name:    name,
+		Domain:  domain,
+		Root:    root,
+		WebRoot: webRoot,
+		Port:    0,
+	})
+	viper.Set("hosts", hosts)
+	err = viper.WriteConfig()
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+	}
+	ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "配置已经添加，请重启服务", "data": nil})
 }
-func (x HostController) Show(context *gin.Context) {
-	//
-}
-func (x HostController) Update(context *gin.Context) {
-	//
-}
-func (x HostController) Create(context *gin.Context) {
-	//
-}
-func (x HostController) Delete(context *gin.Context) {
-	//
+func (x HostController) Delete(ctx *gin.Context) {
+	var domain = ctx.Param("domain")
+	err := x.initVirtualHost()
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+		return
+	}
+	var newHosts []model.VirtualHost
+	for _, h := range viper.Get("hosts").([]model.VirtualHost) {
+		if h.Domain == domain {
+			continue
+		}
+		newHosts = append(newHosts, h)
+	}
+	viper.Set("hosts", newHosts)
+	err = viper.WriteConfig()
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "已经删除配置", "data": nil})
 }
 
 func (x HostController) parseYAML() error {
@@ -385,4 +464,97 @@ func (x HostController) toJson(v any) string {
 	bs, _ := json.MarshalIndent(v, "", "\t")
 	log.Println(string(bs))
 	return string(bs)
+}
+
+func (x HostController) initVirtualHost() error {
+	// 需要在配置docker前设置默认虚拟主机
+	file, err := os.OpenFile("config.toml", os.O_CREATE|os.O_RDWR|os.O_TRUNC, fs.ModePerm)
+	if err != nil {
+		return err
+	}
+	err = viper.ReadConfig(file)
+	if err != nil {
+		log.Fatalln("[viper.ReadConfig error]", err.Error())
+		return err
+	}
+	var hosts = []model.VirtualHost{
+		{
+			Name:    "default",
+			Domain:  "default.me",
+			Root:    filepath.Join(x.currentDirectory(), "dockerfile/nginx/html"),
+			WebRoot: "",
+			Port:    0,
+		},
+	}
+	viper.SetConfigFile("config.toml")
+	viper.SetDefault("READEME", "该配置自动生成，请勿修改")
+	viper.SetDefault("app", "docker-lnmp")
+	viper.SetDefault("hosts", hosts)
+	err = viper.WriteConfig()
+	if err != nil {
+		log.Fatalln("[viper.WriteConfig error]", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (x HostController) getConfig() {
+	file, err := os.OpenFile("config.toml", os.O_CREATE|os.O_RDWR|os.O_TRUNC, fs.ModePerm)
+	if err != nil {
+		log.Fatalln("[os.Open error]", err.Error())
+		return
+	}
+	err = viper.ReadConfig(file)
+	viper.SetConfigFile("config.toml")
+	if err != nil {
+		log.Fatalln("[viper.ReadConfig error]", err.Error())
+
+	}
+	// 使用golang的viper写入配置到文件中
+	var hosts = []model.VirtualHost{
+		{
+			Name:    "api",
+			Domain:  "api.local.me",
+			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
+			WebRoot: "",
+			Port:    0,
+		},
+		{
+			Name:    "mobile",
+			Domain:  "m.local.me",
+			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
+			WebRoot: "/mm",
+			Port:    0,
+		},
+		{
+			Name:    "download",
+			Domain:  "d.local.me",
+			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
+			WebRoot: "",
+			Port:    0,
+		},
+		{
+			Name:    "tv",
+			Domain:  "tv.local.me",
+			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
+			WebRoot: "",
+			Port:    0,
+		},
+	}
+
+	viper.SetDefault("READEME", "该配置自动生成，请勿修改")
+	viper.SetDefault("app", "docker-lnmp")
+	viper.Set("hosts", hosts)
+	err = viper.WriteConfig()
+	if err != nil {
+		log.Fatalln("[viper.WriteConfig error]", err.Error())
+		return
+	}
+
+	var tmpHosts = viper.Get("hosts").([]model.VirtualHost)
+
+	log.Println("[================> ]", x.toJson(tmpHosts))
+	log.Println("[================>LEN ]", len(tmpHosts))
+
+	log.Printf("xxxx] %s", viper.GetString("app"))
 }
