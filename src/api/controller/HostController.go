@@ -17,117 +17,18 @@ import (
 )
 
 type HostController struct {
-	//ctx.JSON(http.StatusOK,gin.H{"code":200,"msg":"","data":nil})
 }
 
 func (x HostController) Init(ctx *gin.Context) {
-
-	var hosts = []model.VirtualHost{
-		{
-			Name:    "api",
-			Domain:  "api.local.me",
-			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
-			WebRoot: "",
-			Port:    0,
-		},
-		{
-			Name:    "mobile",
-			Domain:  "m.local.me",
-			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
-			WebRoot: "/mm",
-			Port:    0,
-		},
-		{
-			Name:    "download",
-			Domain:  "d.local.me",
-			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
-			WebRoot: "",
-			Port:    0,
-		},
-		{
-			Name:    "tv",
-			Domain:  "tv.local.me",
-			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
-			WebRoot: "",
-			Port:    0,
-		},
-	}
-
+	var hosts []model.VirtualHost
 	var dc = x.updateVirtualHost(hosts)
-
 	out, err := yaml.Marshal(dc)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": err.Error(), "data": nil})
 		return
 	}
-
 	ctx.String(http.StatusOK, string(out))
-
 	return
-	//var dc = model.DockerComposeTpl{
-	//	Version:  "3",
-	//	Networks: map[string]interface{}{"default-network": nil},
-	//	Volumes: map[string]interface{}{
-	//		"default_mariadb_data": nil,
-	//		"default_redis_data":   nil,
-	//	},
-	//	Services: map[string]interface{}{
-	//		"nginx": model.DockerComposeServiceTpl{
-	//			ContainerName: "lnmp-nginx",
-	//			Image:         "nginx:stable-alpine",
-	//			Networks:      []string{"default-network"},
-	//			DependsOn:     []string{"php", "mariadb", "redis"},
-	//			Ports:         []string{"80:80", "443:443"},
-	//			Volumes: []string{
-	//				"D:/ProgramData/docker-lamp/nginx/log:/var/log/nginx",
-	//			},
-	//		},
-	//		"php": model.DockerComposeServiceTpl{
-	//			ContainerName: "lnmp-php72",
-	//			Build:         map[string]interface{}{"dockerfile": "files/dockerfile/lamp-php-fpm"},
-	//			Networks:      []string{"default-network"},
-	//			Volumes: []string{
-	//				"D:/repo/aidun/74cms:/apps/www/rencai.local.me",
-	//			},
-	//		},
-	//		"mariadb": model.DockerComposeServiceTpl{
-	//			ContainerName: "lnmp-mariadb",
-	//			Image:         "mariadb:10.7.8",
-	//			Networks:      []string{"default-network"},
-	//			Environment:   []string{"MARIADB_ROOT_PASSWORD=123456"},
-	//			Volumes: []string{
-	//				"default_mariadb_data:/var/lib/mysql",
-	//			},
-	//		},
-	//		"redis": model.DockerComposeServiceTpl{
-	//			ContainerName: "lnmp-redis",
-	//			Image:         "redis:latest",
-	//			Networks:      []string{"default-network"},
-	//			Volumes: []string{
-	//				"default_redis_data:/data",
-	//			},
-	//		},
-	//		"phpmyadmin": model.DockerComposeServiceTpl{
-	//			ContainerName: "lnmp-sql-admin",
-	//			Image:         "phpmyadmin:latest",
-	//			Networks:      []string{"default-network"},
-	//			Environment: []string{
-	//				"PMA_ARBITRARY=1",
-	//				"PMA_HOST=lnmp-mariadb",
-	//				"PMA_PORT=3306",
-	//				"UPLOAD_LIMIT=512M",
-	//			},
-	//		},
-	//	},
-	//}
-	//
-	////if v, ok := dc.Networks["default-network"]; !ok {
-	////	log.Printf("！dc.Networks[\"ss\"]")
-	////} else {
-	////	log.Printf("vvv: ", v)
-	////}
-	//
-	//ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": nil, "data": dc})
 }
 
 func (x HostController) List(ctx *gin.Context) {
@@ -405,53 +306,6 @@ func (x HostController) updateNginxHostConfig(host model.VirtualHost) {
 	}
 }
 
-//func (x HostController) initNginxConfig() string {
-//	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-//	if err != nil {
-//		return ""
-//	}
-//	p, err := parser.NewParser(filepath.Join(x.currentDirectory(), "/../../dockerfile/nginx/config/default.me.tpl"))
-//	if err != nil {
-//		log.Printf("[err] %s", err.Error())
-//		return ""
-//	}
-//	c := p.Parse()
-//	for _, directive := range c.FindDirectives("root") {
-//		directive.GetParameters()[0] = "/path/to/some/where"
-//	}
-//	for _, directive := range c.FindDirectives("listen") {
-//		directive.GetParameters()[0] = "8070"
-//	}
-//	for _, directive := range c.FindDirectives("server_name") {
-//		directive.GetParameters()[0] = "debug.local.me"
-//	}
-//
-//	log.Println()
-//	log.Println()
-//	log.Println("======================================================")
-//
-//	for _, directive := range c.FindDirectives("location") {
-//		log.Printf("[GetName]  %#v", directive.GetName())
-//		log.Printf("[GetParameters] %#v", directive.GetParameters())
-//		log.Printf("[GetComment] %#v", x.toJson(directive.GetComment()))
-//		log.Printf("[GetBlock] %#v", directive.GetBlock())
-//		for _, d2 := range directive.GetBlock().GetDirectives() {
-//			log.Printf("      [BLOCK.NAME] %#v", d2.GetName())
-//			log.Printf("      [BLOCK.PARA] %#v", d2.GetParameters())
-//			log.Printf("      [BLOCK.COMM] %#v", d2.GetComment())
-//			log.Printf("      [BLOCK.BLOC] %#v", d2.GetBlock())
-//		}
-//
-//		log.Println()
-//		log.Println()
-//		log.Println("===================")
-//	}
-//
-//	// fmt.Println(gonginx.DumpBlock(c.Block, gonginx.IndentedStyle))
-//
-//	return dir
-//}
-
 func (x HostController) currentDirectory() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
@@ -496,65 +350,4 @@ func (x HostController) initVirtualHost() error {
 		return err
 	}
 	return nil
-}
-
-func (x HostController) getConfig() {
-	file, err := os.OpenFile("config.toml", os.O_CREATE|os.O_RDWR|os.O_TRUNC, fs.ModePerm)
-	if err != nil {
-		log.Fatalln("[os.Open error]", err.Error())
-		return
-	}
-	err = viper.ReadConfig(file)
-	viper.SetConfigFile("config.toml")
-	if err != nil {
-		log.Fatalln("[viper.ReadConfig error]", err.Error())
-
-	}
-	// 使用golang的viper写入配置到文件中
-	var hosts = []model.VirtualHost{
-		{
-			Name:    "api",
-			Domain:  "api.local.me",
-			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
-			WebRoot: "",
-			Port:    0,
-		},
-		{
-			Name:    "mobile",
-			Domain:  "m.local.me",
-			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
-			WebRoot: "/mm",
-			Port:    0,
-		},
-		{
-			Name:    "download",
-			Domain:  "d.local.me",
-			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
-			WebRoot: "",
-			Port:    0,
-		},
-		{
-			Name:    "tv",
-			Domain:  "tv.local.me",
-			Root:    "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\dockerfile\\nginx\\html",
-			WebRoot: "",
-			Port:    0,
-		},
-	}
-
-	viper.SetDefault("READEME", "该配置自动生成，请勿修改")
-	viper.SetDefault("app", "docker-lnmp")
-	viper.Set("hosts", hosts)
-	err = viper.WriteConfig()
-	if err != nil {
-		log.Fatalln("[viper.WriteConfig error]", err.Error())
-		return
-	}
-
-	var tmpHosts = viper.Get("hosts").([]model.VirtualHost)
-
-	log.Println("[================> ]", x.toJson(tmpHosts))
-	log.Println("[================>LEN ]", len(tmpHosts))
-
-	log.Printf("xxxx] %s", viper.GetString("app"))
 }
