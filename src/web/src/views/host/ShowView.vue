@@ -61,10 +61,11 @@ export default {
         break;
       case 'update':
         this.isUpdate = true
+        this.getVirtualHost(this.$route.params['domain'])
         break
       default:
+        this.getVirtualHost(this.$route.params['domain'])
     }
-    this.getVirtualHost(this.$route.params['domain'])
   },
   methods: {
     getVirtualHost(domain) {
