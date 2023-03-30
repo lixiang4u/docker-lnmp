@@ -333,6 +333,8 @@ func (x HostController) initVirtualHost() error {
 	viper.SetConfigFile("config.json")
 	err = viper.ReadInConfig()
 	if err != nil {
+		_ = file.Truncate(0)
+		_, _ = file.WriteString("{}")
 		log.Fatalln("[viper.ReadConfig error]", err.Error())
 		return err
 	}
