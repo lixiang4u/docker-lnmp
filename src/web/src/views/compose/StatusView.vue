@@ -2,32 +2,37 @@
   <div class="container">
     <Header/>
 
+
     <ul class="list">
       <li class="title">
         <span>序号</span>
         <span>名称</span>
-        <span>域名</span>
-        <span>根目录</span>
-        <span>web目录</span>
+        <span>镜像</span>
+        <span>状态</span>
+        <span>端口</span>
+        <span>最近启动时间</span>
         <span>操作</span>
       </li>
-      <li v-for="(item, idx) in hostList" v-bind:key="idx">
+      <li v-for="(item, idx) in composeStatusList" v-bind:key="idx">
         <span>{{ idx + 1 }}</span>
         <span>
-          <el-tooltip placement="top" :content="item['name']">{{ item['name'] }}</el-tooltip>
+          <el-tooltip placement="top" :content="item['name']+' : '+ item['id']">{{ item['name'] }}</el-tooltip>
         </span>
         <span>
-          <a :href="'http://'+item['domain']" target="_blank">
-            <el-tooltip placement="top" :content="item['domain']">{{ item['domain'] }}</el-tooltip>
+          <a href="#">
+            <el-tooltip placement="top" :content="item['image']">{{ item['image'] }}</el-tooltip>
           </a>
         </span>
         <span>
-          <el-tooltip placement="top" :content="item['root']">{{ item['root'] }}</el-tooltip>
+            <el-tooltip placement="top" :content="item['state']">{{ item['state'] }}</el-tooltip>
         </span>
         <span>
-          <el-tooltip placement="top" :content="item['web_root'] || '/' ">
-            {{ item['web_root'] || '/' }}
-          </el-tooltip>
+          <a href="#">
+            <el-tooltip placement="top" :content="item['ports']">{{ listToString(item['ports']) }}</el-tooltip>
+          </a>
+        </span>
+        <span>
+            <el-tooltip placement="top" :content="item['status']">{{ cutLastUpdateTime(item['status']) }}</el-tooltip>
         </span>
         <span>
           [<el-link type="primary" :href="'/host/show/'+item['id']+'?op=show'">详情</el-link>]
@@ -56,14 +61,14 @@
 </template>
 <script>
 import axios from "axios";
-import {ElMessage} from "element-plus";
+// import {ElMessage} from "element-plus";
 import Header from "@/components/Header.vue";
 
 export default {
   name: "host-list",
   data() {
     return {
-      hostList: [],
+      composeStatusList: [],
       dialogVisible: false,
       removeId: null,
     }
@@ -79,35 +84,22 @@ export default {
   },
   methods: {
     getVirtualHost() {
-      axios.get('/host/list').then((response) => {
+      axios.get('/compose/status').then((response) => {
         if (response.data['code'] === 200) {
-          this.hostList = response.data['data']
+          this.composeStatusList = response.data['data']
         }
       })
     },
-    onRemoveConfirm(id) {
-      this.removeId = id
-      this.dialogVisible = true
+    cutLastUpdateTime(value) {
+      let arr = value.split(") ")
+      if (arr.length > 1) {
+        return arr[1]
+      }
+      return arr[0]
     },
-    onRemove() {
-      console.log('[remove]', this.removeId)
-      axios.delete('/host/delete/' + this.removeId).then((response) => {
-        if (response.data['code'] === 200) {
-          ElMessage({message: response.data['msg'], type: 'success',})
-        } else {
-          ElMessage.error(response.data['msg'])
-        }
-      }).finally(() => {
-        this.dialogVisible = false
-        this.removeId = ''
-      })
-    },
-    goList() {
-      this.$router.push({name: 'hostShow'})
-    },
-    goCreate() {
-      this.$router.push({name: 'hostCreate', query: {op: 'create'}})
-    },
+    listToString(value) {
+      return value.join("\r\n")
+    }
   }
 }
 </script>
@@ -145,7 +137,7 @@ export default {
 }
 
 .container li > span:nth-child(2) {
-  width: 140px;
+  width: 200px;
 }
 
 .container li > span:nth-child(3) {
@@ -153,11 +145,14 @@ export default {
 }
 
 .container li > span:nth-child(4) {
-  width: 440px;
+  width: 100px;
 }
 
 .container li > span:nth-child(5) {
-  width: 100px;
+  width: 120px;
+}
+.container li > span:nth-child(6) {
+  width: 150px;
 }
 
 </style>

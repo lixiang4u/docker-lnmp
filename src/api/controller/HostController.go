@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/lixiang4u/docker-lnmp/config"
 	"github.com/lixiang4u/docker-lnmp/model"
 	"github.com/lixiang4u/docker-lnmp/util"
 	"github.com/spf13/viper"
@@ -347,7 +348,7 @@ func (x HostController) initVirtualHost() error {
 	}
 
 	viper.SetDefault("_READE_ME", "该配置自动生成，请勿修改")
-	viper.SetDefault("app", "docker-lnmp")
+	viper.SetDefault("app", config.AppName)
 	viper.SetDefault("hosts", hosts)
 	err = viper.WriteConfig()
 	if err != nil {

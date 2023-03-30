@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import ListView from "../views/host/ListView.vue";
+import ComposeStatus from "../views/compose/StatusView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -7,7 +7,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: ListView
+      component: ComposeStatus
     },
     {
       path: '/host/list',
@@ -28,6 +28,11 @@ const router = createRouter({
       path: '/host/update/:domain',
       name: 'hostUpdate',
       component: () => import('../views/host/ShowView.vue')
+    },
+    {
+      path: '/compose/status',
+      name: 'composeStatus',
+      component: () => import('../views/compose/StatusView.vue')
     },
     {
       path: '/about',

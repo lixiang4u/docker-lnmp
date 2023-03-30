@@ -4,7 +4,7 @@
       mode="horizontal"
   >
     <el-menu-item index="1" @click="goHome">
-      <el-text class="mx-1" size="large"><b>DOCKER-LNMP</b></el-text>
+      <el-text class="mx-1" size="large">docker-lnmp</el-text>
     </el-menu-item>
 
     <el-menu-item index="3" @click="goList">站点列表</el-menu-item>
@@ -38,4 +38,8 @@ export default {
 </script>
 
 <style scoped>
+.mx-1 {
+  font-weight: bold;
+  font-size: 150%;
+}
 </style>
