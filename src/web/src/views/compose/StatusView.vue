@@ -24,11 +24,15 @@
           </a>
         </span>
         <span>
-            <el-tooltip placement="top" :content="item['state']">{{ item['state'] }}</el-tooltip>
+            <el-tooltip placement="top" :content="item['state']">
+              <el-icon><VideoPlay/></el-icon>
+              <el-icon><VideoPause/></el-icon>
+              {{ item['state'] }}
+            </el-tooltip>
         </span>
         <span>
           <a href="#">
-            <el-tooltip placement="top" :content="item['ports']">{{ listToString(item['ports']) }}</el-tooltip>
+            <el-tooltip placement="top" :content="listToString(item['ports'])">{{ listToString(item['ports']) }}</el-tooltip>
           </a>
         </span>
         <span>
@@ -63,6 +67,7 @@
 import axios from "axios";
 // import {ElMessage} from "element-plus";
 import Header from "@/components/Header.vue";
+import {VideoPause, VideoPlay} from "@element-plus/icons-vue";
 
 export default {
   name: "host-list",
@@ -75,7 +80,9 @@ export default {
   },
   components: {
     // eslint-disable-next-line vue/no-reserved-component-names
-    Header
+    Header,
+    VideoPlay,
+    VideoPause,
   },
   created() {
   },
@@ -98,6 +105,9 @@ export default {
       return arr[0]
     },
     listToString(value) {
+      if (value == null) {
+        return ''
+      }
       return value.join("\r\n")
     }
   }
@@ -149,10 +159,11 @@ export default {
 }
 
 .container li > span:nth-child(5) {
-  width: 120px;
+  width: 130px;
 }
+
 .container li > span:nth-child(6) {
-  width: 150px;
+  width: 120px;
 }
 
 </style>
