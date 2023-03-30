@@ -71,6 +71,7 @@ export default {
     }
   },
   components: {
+    // eslint-disable-next-line vue/no-reserved-component-names
     Header
   },
   created() {
@@ -90,16 +91,17 @@ export default {
       this.removeId = id
       this.dialogVisible = true
     },
-    onRemove(id) {
+    onRemove() {
       console.log('[remove]', this.removeId)
-      ///////////////////
       axios.delete('/host/delete/' + this.removeId).then((response) => {
         if (response.data['code'] === 200) {
-          this.hostInfo = response.data['data']
           ElMessage({message: response.data['msg'], type: 'success',})
         } else {
           ElMessage.error(response.data['msg'])
         }
+      }).finally(() => {
+        this.dialogVisible = false
+        this.removeId = ''
       })
     },
     goList() {

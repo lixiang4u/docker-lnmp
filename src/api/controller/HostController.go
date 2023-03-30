@@ -38,12 +38,14 @@ func (x HostController) List(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"msg":  nil,
-		"data": viper.Get("hosts").([]model.VirtualHost),
+		"data": x.convertVirtualHost(viper.Get("hosts")),
 	})
 }
+
 func (x HostController) Show(ctx *gin.Context) {
 	var id = ctx.Param("id")
 	err := x.initVirtualHost()
@@ -51,7 +53,7 @@ func (x HostController) Show(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
-	for _, h := range viper.Get("hosts").([]model.VirtualHost) {
+	for _, h := range x.convertVirtualHost(viper.Get("hosts")) {
 		if h.Id == id {
 			ctx.JSON(http.StatusOK, gin.H{
 				"code": 200,
@@ -63,6 +65,7 @@ func (x HostController) Show(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "未找到配置", "data": nil})
 }
+
 func (x HostController) Update(ctx *gin.Context) {
 	var id = ctx.Param("id")
 	var domain = ctx.PostForm("domain")
@@ -86,7 +89,7 @@ func (x HostController) Update(ctx *gin.Context) {
 		return
 	}
 	var findUpdate = false
-	var hosts = viper.Get("hosts").([]model.VirtualHost)
+	var hosts = x.convertVirtualHost(viper.Get("hosts"))
 	for i, h := range hosts {
 		if h.Id == id {
 			findUpdate = true
@@ -106,8 +109,9 @@ func (x HostController) Update(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 	}
-	ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "配置已经修改，请重启服务", "data": nil})
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "配置已经修改，请重启服务", "data": nil})
 }
+
 func (x HostController) Create(ctx *gin.Context) {
 	var name = ctx.PostForm("name")
 	var domain = ctx.PostForm("domain")
@@ -129,7 +133,7 @@ func (x HostController) Create(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
-	var hosts = viper.Get("hosts").([]model.VirtualHost)
+	var hosts = x.convertVirtualHost(viper.Get("hosts"))
 	for _, h := range hosts {
 		if h.Domain == domain {
 			ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "域名已经存在", "data": nil})
@@ -149,8 +153,9 @@ func (x HostController) Create(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 	}
-	ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "配置已经添加，请重启服务", "data": nil})
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "配置已经添加，请重启服务", "data": nil})
 }
+
 func (x HostController) Delete(ctx *gin.Context) {
 	var id = ctx.Param("id")
 	err := x.initVirtualHost()
@@ -159,20 +164,20 @@ func (x HostController) Delete(ctx *gin.Context) {
 		return
 	}
 	var newHosts []model.VirtualHost
-	for _, h := range viper.Get("hosts").([]model.VirtualHost) {
+	var oldHosts = x.convertVirtualHost(viper.Get("hosts"))
+	for _, h := range oldHosts {
 		if h.Id == id {
 			continue
 		}
 		newHosts = append(newHosts, h)
 	}
-	log.Println(util.ToJson(newHosts))
 	viper.Set("hosts", newHosts)
 	err = viper.WriteConfig()
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": "已经删除配置", "data": nil})
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "已经删除配置", "data": nil})
 }
 
 func (x HostController) initConfig() model.DockerComposeTpl {
@@ -318,11 +323,14 @@ func (x HostController) updateNginxHostConfig(host model.VirtualHost) {
 
 func (x HostController) initVirtualHost() error {
 	// 需要在配置docker前设置默认虚拟主机
-	file, err := os.OpenFile("config.toml", os.O_CREATE|os.O_RDWR|os.O_TRUNC, fs.ModePerm)
+	file, err := os.OpenFile("config.json", os.O_CREATE|os.O_RDWR, fs.ModePerm)
 	if err != nil {
 		return err
 	}
-	err = viper.ReadConfig(file)
+	defer func() { _ = file.Close() }()
+
+	viper.SetConfigFile("config.json")
+	err = viper.ReadInConfig()
 	if err != nil {
 		log.Fatalln("[viper.ReadConfig error]", err.Error())
 		return err
@@ -337,8 +345,8 @@ func (x HostController) initVirtualHost() error {
 			Port:    0,
 		},
 	}
-	viper.SetConfigFile("config.toml")
-	viper.SetDefault("READEME", "该配置自动生成，请勿修改")
+
+	viper.SetDefault("_READE_ME", "该配置自动生成，请勿修改")
 	viper.SetDefault("app", "docker-lnmp")
 	viper.SetDefault("hosts", hosts)
 	err = viper.WriteConfig()
@@ -347,4 +355,27 @@ func (x HostController) initVirtualHost() error {
 		return err
 	}
 	return nil
+}
+
+func (x HostController) convertVirtualHost(v any) []model.VirtualHost {
+	if v, ok := v.([]model.VirtualHost); ok {
+		return v
+	}
+	if tmpHosts, ok := v.([]interface{}); ok {
+		var tmpList []model.VirtualHost
+		for _, tmpHost := range tmpHosts {
+			if h, ok := tmpHost.(map[string]interface{}); ok {
+				tmpList = append(tmpList, model.VirtualHost{
+					Id:      h["id"].(string),
+					Name:    h["name"].(string),
+					Domain:  h["domain"].(string),
+					Root:    h["root"].(string),
+					WebRoot: h["web_root"].(string),
+					Port:    0,
+				})
+			}
+		}
+		return tmpList
+	}
+	return []model.VirtualHost{}
 }

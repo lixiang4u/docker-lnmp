@@ -49,6 +49,7 @@ export default {
     }
   },
   components: {
+    // eslint-disable-next-line vue/no-reserved-component-names
     Header
   },
   created() {
@@ -80,15 +81,12 @@ export default {
       console.log('[files]', files)
     },
     onCreate() {
-      console.log('[hostInfo]', this.hostInfo)
       axios.post('/host/create', this.hostInfo, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
       }).then((response) => {
-        console.log('[data]', response)
         if (response.data['code'] === 200) {
-          this.hostInfo = response.data['data']
           ElMessage({message: response.data['msg'], type: 'success',})
         } else {
           ElMessage.error(response.data['msg'])
@@ -96,7 +94,6 @@ export default {
       })
     },
     onUpdate() {
-      console.log('[hostInfo]', this.hostInfo)
       axios.put('/host/update/'+this.hostInfo['id'], this.hostInfo, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -104,7 +101,6 @@ export default {
       }).then((response) => {
         console.log('[data]', response)
         if (response.data['code'] === 200) {
-          this.hostInfo = response.data['data']
           ElMessage({message: response.data['msg'], type: 'success',})
         } else {
           ElMessage.error(response.data['msg'])
