@@ -1,16 +1,14 @@
 package controller
 
 import (
-	"crypto/md5"
-	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/lixiang4u/docker-lnmp/model"
+	"github.com/lixiang4u/docker-lnmp/util"
 	"github.com/spf13/viper"
 	"github.com/tufanbarisyildirim/gonginx"
 	"github.com/tufanbarisyildirim/gonginx/parser"
 	"gopkg.in/yaml.v3"
-	"io"
 	"io/fs"
 	"log"
 	"net/http"
@@ -139,7 +137,7 @@ func (x HostController) Create(ctx *gin.Context) {
 		}
 	}
 	hosts = append(hosts, model.VirtualHost{
-		Id:      x.hash(domain),
+		Id:      util.StringHash(domain),
 		Name:    name,
 		Domain:  domain,
 		Root:    root,
@@ -167,7 +165,7 @@ func (x HostController) Delete(ctx *gin.Context) {
 		}
 		newHosts = append(newHosts, h)
 	}
-	log.Println(x.toJson(newHosts))
+	log.Println(util.ToJson(newHosts))
 	viper.Set("hosts", newHosts)
 	err = viper.WriteConfig()
 	if err != nil {
@@ -233,9 +231,9 @@ func (x HostController) initConfig() model.DockerComposeTpl {
 
 	if _, ok := dc.Services["nginx"]; ok {
 		var nginxService = dc.Services["nginx"].(model.DockerComposeServiceTpl)
-		var pLog = fmt.Sprintf("%s:%s", filepath.Join(x.currentDirectory(), "dockerfile/nginx/log"), "/var/log/nginx")
-		var pConfig = fmt.Sprintf("%s:%s", filepath.Join(x.currentDirectory(), "dockerfile/nginx/config"), "/etc/nginx/conf.d")
-		var pWWW = fmt.Sprintf("%s:%s", filepath.Join(x.currentDirectory(), "dockerfile/nginx/html"), "/apps/www/default.me:ro,bind")
+		var pLog = fmt.Sprintf("%s:%s", filepath.Join(util.AppDirectory(), "dockerfile/nginx/log"), "/var/log/nginx")
+		var pConfig = fmt.Sprintf("%s:%s", filepath.Join(util.AppDirectory(), "dockerfile/nginx/config"), "/etc/nginx/conf.d")
+		var pWWW = fmt.Sprintf("%s:%s", filepath.Join(util.AppDirectory(), "dockerfile/nginx/html"), "/apps/www/default.me:ro,bind")
 		nginxService.Volumes = append(nginxService.Volumes, pLog)
 		nginxService.Volumes = append(nginxService.Volumes, pConfig)
 		nginxService.Volumes = append(nginxService.Volumes, pWWW)
@@ -253,7 +251,7 @@ func (x HostController) updateVirtualHost(hosts []model.VirtualHost) model.Docke
 			var nginxService = dc.Services["nginx"].(model.DockerComposeServiceTpl)
 			var pWWW = fmt.Sprintf(
 				"%s:%s",
-				filepath.Join(x.currentDirectory(), "dockerfile/nginx/html"),
+				filepath.Join(util.AppDirectory(), "dockerfile/nginx/html"),
 				fmt.Sprintf("/apps/www/%s:ro,bind", host.Domain),
 			)
 			nginxService.Volumes = append(nginxService.Volumes, pWWW)
@@ -264,7 +262,7 @@ func (x HostController) updateVirtualHost(hosts []model.VirtualHost) model.Docke
 			var phpService = dc.Services["php"].(model.DockerComposeServiceTpl)
 			var pWWW = fmt.Sprintf(
 				"%s:%s",
-				filepath.Join(x.currentDirectory(), "dockerfile/nginx/html"),
+				filepath.Join(util.AppDirectory(), "dockerfile/nginx/html"),
 				fmt.Sprintf("/apps/www/%s:ro,bind", host.Domain),
 			)
 			phpService.Volumes = append(phpService.Volumes, pWWW)
@@ -280,7 +278,7 @@ func (x HostController) updateVirtualHost(hosts []model.VirtualHost) model.Docke
 }
 
 func (x HostController) updateNginxHostConfig(host model.VirtualHost) {
-	p, err := parser.NewParser(filepath.Join(x.currentDirectory(), "dockerfile/nginx/config/default.tpl"))
+	p, err := parser.NewParser(filepath.Join(util.AppDirectory(), "dockerfile/nginx/config/default.tpl"))
 	if err != nil {
 		log.Fatalln("[parser.NewParser error]", err.Error())
 		return
@@ -302,7 +300,7 @@ func (x HostController) updateNginxHostConfig(host model.VirtualHost) {
 	}
 	// golang中使用filepath 生成linux中的目录路径
 	var pConfig = filepath.Join(
-		x.currentDirectory(),
+		util.AppDirectory(),
 		"dockerfile/nginx/config",
 		fmt.Sprintf("%s.conf", host.Domain),
 	)
@@ -318,20 +316,6 @@ func (x HostController) updateNginxHostConfig(host model.VirtualHost) {
 	}
 }
 
-func (x HostController) currentDirectory() string {
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		return ""
-	}
-	return filepath.Dir(filepath.Dir(dir))
-}
-
-func (x HostController) toJson(v any) string {
-	bs, _ := json.MarshalIndent(v, "", "\t")
-	log.Println(string(bs))
-	return string(bs)
-}
-
 func (x HostController) initVirtualHost() error {
 	// 需要在配置docker前设置默认虚拟主机
 	file, err := os.OpenFile("config.toml", os.O_CREATE|os.O_RDWR|os.O_TRUNC, fs.ModePerm)
@@ -345,10 +329,10 @@ func (x HostController) initVirtualHost() error {
 	}
 	var hosts = []model.VirtualHost{
 		{
-			Id:      x.hash("default.me"),
+			Id:      util.StringHash("default.me"),
 			Name:    "default",
 			Domain:  "default.me",
-			Root:    filepath.Join(x.currentDirectory(), "dockerfile/nginx/html"),
+			Root:    filepath.Join(util.AppDirectory(), "dockerfile/nginx/html"),
 			WebRoot: "",
 			Port:    0,
 		},
@@ -363,13 +347,4 @@ func (x HostController) initVirtualHost() error {
 		return err
 	}
 	return nil
-}
-
-func (x HostController) hash(s string) string {
-	var md5Hash = md5.New()
-	_, err := io.WriteString(md5Hash, s)
-	if err != nil {
-		return ""
-	}
-	return fmt.Sprintf("%x", md5Hash.Sum(nil))[:8]
 }
