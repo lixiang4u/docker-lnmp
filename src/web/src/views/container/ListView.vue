@@ -74,7 +74,7 @@ import {VideoPause, VideoPlay} from "@element-plus/icons-vue";
 import {library} from '@fortawesome/fontawesome-svg-core';
 import {faPlay, faStop} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
-import {ElMessage} from "element-plus";
+import {ElLoading, ElMessage} from "element-plus";
 
 library.add(faPlay, faStop)
 
@@ -85,6 +85,7 @@ export default {
       composeStatusList: [],
       dialogVisible: false,
       removeId: null,
+      loading: false,
     }
   },
   components: {
@@ -123,6 +124,7 @@ export default {
       return value.join(",")
     },
     start(id) {
+      this.showLoading()
       axios.post('/container/start/' + id).then((response) => {
         if (response.data['code'] === 200) {
           ElMessage({message: response.data['msg'], type: 'success',})
@@ -130,10 +132,12 @@ export default {
           ElMessage.error(response.data['msg'])
         }
       }).finally(() => {
+        this.loading.close()
         this.getVirtualHost()
       })
     },
     stop(id) {
+      this.showLoading()
       axios.post('/container/stop/' + id).then((response) => {
         if (response.data['code'] === 200) {
           ElMessage({message: response.data['msg'], type: 'success',})
@@ -141,7 +145,15 @@ export default {
           ElMessage.error(response.data['msg'])
         }
       }).finally(() => {
+        this.loading.close()
         this.getVirtualHost()
+      })
+    },
+    showLoading() {
+      this.loading = ElLoading.service({
+        lock: true,
+        text: 'Loading',
+        background: 'rgba(0, 0, 0, 0.7)',
       })
     },
   }
