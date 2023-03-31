@@ -9,7 +9,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
-	"github.com/lixiang4u/docker-lnmp/config"
+	"github.com/lixiang4u/docker-lnmp/model"
 	"github.com/lixiang4u/docker-lnmp/util"
 	"io"
 	"log"
@@ -31,58 +31,13 @@ func (x ContainerController) connect(ctx *gin.Context) *client.Client {
 func (x ContainerController) List(ctx *gin.Context) {
 	var imageId = ctx.Query("image_id")
 
-	newArgs := filters.NewArgs()
-	if imageId != "" {
-		newArgs.Add("ancestor", imageId)
-	}
-
-	dClient := x.connect(ctx)
-	listSummary, err := dClient.ContainerList(context.Background(), types.ContainerListOptions{
-		All:     true,
-		Filters: newArgs,
-	})
+	listSummary, err := x.findContainers(x.connect(ctx), imageId, "")
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
-	var resultList []any
-	for _, item := range listSummary {
-		if _, ok := item.Labels["com.docker.compose.project"]; !ok {
-			//continue
-		}
-		if item.Labels["com.docker.compose.project"] != config.AppName {
-			//continue
-		}
 
-		var ports []string
-		for _, p := range item.Ports {
-			if p.PublicPort == 0 {
-				ports = append(ports, fmt.Sprintf("%d/%s", p.PrivatePort, p.Type))
-			} else {
-				ports = append(ports, fmt.Sprintf("%d:%d", p.PublicPort, p.PrivatePort))
-			}
-		}
-
-		resultList = append(resultList, gin.H{
-			"id":       item.ID[:8],
-			"name":     item.Names[0],
-			"image":    item.Image,
-			"image_id": item.ImageID,
-			"labels": gin.H{
-				"project":     item.Labels["com.docker.compose.project"],
-				"service":     item.Labels["com.docker.compose.service"],
-				"version":     item.Labels["com.docker.compose.version"],
-				"config_file": item.Labels["com.docker.compose.project.config_files"],
-				"working_dir": item.Labels["com.docker.compose.project.working_dir"],
-			},
-			"state":      item.State,
-			"ports":      ports,
-			"status":     item.Status,
-			"created_at": item.Created,
-		})
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "", "data": resultList})
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": listSummary})
 	return
 }
 
@@ -169,4 +124,60 @@ func (x ContainerController) Logs(ctx *gin.Context) {
 		"data": util.DockerLogFormat(string(bs)),
 	})
 	return
+}
+
+func (x ContainerController) findContainers(dockerClient *client.Client, imageId, projectName string) ([]model.Container, error) {
+	newArgs := filters.NewArgs()
+	if imageId != "" {
+		newArgs.Add("ancestor", imageId)
+	}
+
+	listSummary, err := dockerClient.ContainerList(context.Background(), types.ContainerListOptions{All: true, Filters: newArgs})
+	if err != nil {
+		return nil, err
+	}
+	var resultList []model.Container
+	for _, item := range listSummary {
+		if projectName != "" && item.Labels["com.docker.compose.project"] != projectName {
+			continue
+		}
+		var ports []string
+		for _, p := range item.Ports {
+			if p.PublicPort == 0 {
+				ports = append(ports, fmt.Sprintf("%d/%s", p.PrivatePort, p.Type))
+			} else {
+				ports = append(ports, fmt.Sprintf("%d:%d", p.PublicPort, p.PrivatePort))
+			}
+		}
+		resultList = append(resultList, model.Container{
+			Id:      item.ID,
+			Name:    item.Names[0],
+			Image:   item.Image,
+			ImageId: item.ImageID,
+			Labels: model.Label{
+				Project:    item.Labels["com.docker.compose.project"],
+				Service:    item.Labels["com.docker.compose.service"],
+				Version:    item.Labels["com.docker.compose.version"],
+				ConfigFile: item.Labels["com.docker.compose.project.config_files"],
+				WorkingDir: item.Labels["com.docker.compose.project.working_dir"],
+			},
+			State:     item.State,
+			Ports:     ports,
+			Status:    item.Status,
+			CreatedAt: item.Created,
+		})
+	}
+	return resultList, err
+}
+
+func (x ContainerController) containersToProjects(containerList []model.Container) map[string][]model.Container {
+	var resultMap = make(map[string][]model.Container)
+	for _, item := range containerList {
+		if item.Labels.Project == "" {
+			resultMap[item.Name] = append(resultMap[item.Name], item)
+		} else {
+			resultMap[item.Labels.Project] = append(resultMap[item.Labels.Project], item)
+		}
+	}
+	return resultMap
 }

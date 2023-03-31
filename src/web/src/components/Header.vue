@@ -3,7 +3,7 @@
       class="el-menu-demo"
       mode="horizontal"
   >
-    <el-menu-item index="1" @click="this.$router.push({name: 'imageList'})">
+    <el-menu-item index="1" @click="this.$router.push({name: 'containerList'})">
       <el-text class="mx-1" size="large">docker-lnmp</el-text>
     </el-menu-item>
     <el-menu-item index="2" @click="this.$router.push({name: 'imageList', query: {project: 'all'}})">

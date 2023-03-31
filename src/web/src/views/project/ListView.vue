@@ -5,7 +5,7 @@
     <ul class="list">
       <li class="title">
         <span class="p-idx">#</span>
-        <span class="p-project">项目</span>
+        <span class="p-id">ID</span>
         <span class="p-name">容器名称</span>
         <span class="p-image">镜像</span>
         <span class="p-state">状态</span>
@@ -13,57 +13,41 @@
         <span class="p-status">最近启动时间</span>
         <span class="p-op">操作</span>
       </li>
-      <div v-for="(tmpList, projectName, projectIdx) in containerList" v-bind:key="projectName">
-        <li class="project">
-          <span class="p-idx">{{ projectIdx + 1 }}</span>
-          <span class="p-project">{{ projectName }}</span>
-          <span class="p-name"></span>
-          <span class="p-image"></span>
-          <span class="p-state">({{ getActiveCount(tmpList) }}/{{ tmpList.length }})</span>
-          <span class="p-ports"></span>
-          <span class="p-status"></span>
-          <span class="p-op">
-            <font-awesome-icon :icon="['fas', 'play']" class="start" @click="onProjectStart"/>&nbsp;
-            <font-awesome-icon :icon="['fas', 'pause']" class="stop" @click="onProjectStop"/>&nbsp;
-            <font-awesome-icon :icon="['fas', 'trash']" class="stop" @click="onProjectRemoveConfirm"/>
-          </span>
-        </li>
-        <li v-for="(item, idx) in tmpList" v-bind:key="idx">
-          <span class="p-idx"></span>
-          <span class="p-project"></span>
-          <span class="p-name">
-            <el-tooltip placement="top" :content="item['name']+' : '+item['id']">{{ item['name'] }}</el-tooltip>
-          </span>
-          <span class="p-image">
-            <router-link :to="{name: 'imageList', query: {project: 'all'}}">
-              <el-tooltip placement="top" :content="item['image']">{{ item['image'] }}</el-tooltip>
-            </router-link>
-          </span>
-          <span class="p-state">
+      <li v-for="(item, idx) in containerList" v-bind:key="idx">
+        <span class="p-idx">{{ idx + 1 }}</span>
+        <span class="p-id">
+          <el-tooltip placement="top" :content="item['id']+' : '+ item['id']">{{ item['id'] }}</el-tooltip>
+        </span>
+        <span class="p-name">
+          <el-tooltip placement="top" :content="item['name']+' : '+ item['id']">{{ item['name'] }}</el-tooltip>
+        </span>
+        <span class="p-image">
+          <router-link :to="{name: 'imageList', query: {project: 'all'}}">
+            <el-tooltip placement="top" :content="item['image']">{{ item['image'] }}</el-tooltip>
+          </router-link>
+        </span>
+        <span class="p-state">
             <el-tooltip placement="top" :content="item['state']">
               <font-awesome-icon v-if="item['state']==='exited'" :icon="['fas', 'pause']" class="stop"
                                  @click="start(item['id'])"/>
               <font-awesome-icon v-if="item['state']==='running'" :icon="['fas', 'play']" class="start"
                                  @click="stop(item['id'])"/>
             </el-tooltip>
-          </span>
-          <span class="p-ports">
-            <el-tooltip placement="top" :content="portsToText(item['ports'])">{{
-                portsToText(item['ports'])
-              }}</el-tooltip>
-          </span>
-          <span class="p-status p-status-text">
-            <el-tooltip placement="top" :content="item['status']">{{ (item['status']) }}</el-tooltip>
-          </span>
-          <span class="p-op">
-            [<el-link type="warning" :href="'/container/logs/'+item['id']">日志</el-link>]
-            [<el-link type="danger" href="#">删除</el-link>]
-          </span>
-        </li>
-      </div>
+        </span>
+        <span class="p-ports">
+          <el-tooltip placement="top" :content="listToString(item['ports'])">
+            {{ listToString(item['ports']) }}
+          </el-tooltip>
+        </span>
+        <span class="p-status p-status-text">
+            <el-tooltip placement="top" :content="item['status']">{{ cutLastUpdateTime(item['status']) }}</el-tooltip>
+        </span>
+        <span class="p-op">
+          [<el-link type="warning" :href="'/container/logs/'+item['id']">日志</el-link>]
+          [<el-link type="danger" href="#">删除</el-link>]
+        </span>
+      </li>
     </ul>
-
-    <br/><br/>
 
     <el-row>
       <el-button type="primary" @click="startAll">一键启动</el-button>
@@ -87,7 +71,7 @@
       </template>
     </el-dialog>
 
-    <br/><br/>
+    <br /><br />
 
   </div>
 </template>
@@ -97,11 +81,11 @@ import axios from "axios";
 import Header from "@/components/Header.vue";
 import {VideoPause, VideoPlay} from "@element-plus/icons-vue";
 import {library} from '@fortawesome/fontawesome-svg-core';
-import {faPause, faPlay, faStop, faTrash} from '@fortawesome/free-solid-svg-icons';
+import {faPause, faPlay, faStop} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
 import {ElLoading, ElMessage} from "element-plus";
 
-library.add(faPlay, faStop, faPause, faTrash)
+library.add(faPlay, faStop, faPause)
 
 export default {
   name: "host-list",
@@ -113,7 +97,6 @@ export default {
       loading: false,
       search: {
         imageId: '',
-        project: '',
       },
     }
   },
@@ -130,16 +113,11 @@ export default {
   },
   mounted() {
     this.search.imageId = this.$route.query['image_id'] ?? '';
-    this.search.project = this.$route.query['project'] ?? '';
     this.getVirtualHost()
   },
   methods: {
     getVirtualHost() {
-      const q = {
-        project: this.search.project,
-        image_id: this.search.imageId,
-      }
-      axios.get('/project/list', {params: q}).then((response) => {
+      axios.get('/container/list?image_id=' + this.search.imageId).then((response) => {
         if (response.data['code'] === 200) {
           this.containerList = response.data['data']
         }
@@ -208,31 +186,7 @@ export default {
     onRebuild() {
       this.dialogVisible = false
       ElMessage({message: '重构中', type: 'success',})
-    },
-    getActiveCount(containerList) {
-      let count = 0
-      for (const tmpKey in containerList) {
-        if (containerList[tmpKey]['state'] === 'running') {
-          count++
-        }
-      }
-      return count
-    },
-    portsToText(ports) {
-      if (!ports) {
-        return '-'
-      }
-      return ports.join(',')
-    },
-    onProjectStart() {
-      //
-    },
-    onProjectStop() {
-      //
-    },
-    onProjectRemoveConfirm() {
-      //
-    },
+    }
   }
 }
 </script>
@@ -257,10 +211,6 @@ export default {
   font-family: SourceHanSansSC-regular, "微软雅黑", Arial, Helvetica, sans-serif;
 }
 
-.container .list li:hover {
-  border-bottom: 1px solid #2c3e50;
-}
-
 .container li > span {
   display: inline-block;
   overflow: hidden;
@@ -273,24 +223,20 @@ export default {
   width: 24px;
 }
 
-.container li > span.p-project {
-  width: 140px;
-}
-
 .container li > span.p-id {
   width: 80px;
 }
 
 .container li > span.p-name {
-  width: 200px;
+  width: 240px;
 }
 
 .container li > span.p-image {
-  width: 200px;
+  width: 230px;
 }
 
 .container li > span.p-state {
-  width: 120px;
+  width: 90px;
   text-align: center;
 }
 
@@ -299,7 +245,7 @@ export default {
 }
 
 .container li > span.p-status {
-  width: 100px;
+  width: 120px;
 }
 
 .container li > span.p-status-text {

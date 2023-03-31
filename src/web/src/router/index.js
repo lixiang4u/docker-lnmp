@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import ImageList from "../views/image/ListView.vue";
+import RootComponent from "../views/container/ListView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -7,7 +7,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: ImageList
+      component: RootComponent,
     },
     {
       path: '/host/list',
@@ -43,6 +43,11 @@ const router = createRouter({
       path: '/image/list',
       name: 'imageList',
       component: () => import('../views/image/ListView.vue')
+    },
+    {
+      path: '/project/list',
+      name: 'projectList',
+      component: () => import('../views/project/ListView.vue')
     },
     {
       path: '/about',

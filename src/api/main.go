@@ -52,6 +52,7 @@ func runServer() {
 	var hostController = new(controller.HostController)
 	var containerController = new(controller.ContainerController)
 	var imageController = new(controller.ImageController)
+	var projectController = new(controller.ProjectController)
 
 	r.GET("/host/init", hostController.Init)
 	r.GET("/host/list", hostController.List)
@@ -69,6 +70,11 @@ func runServer() {
 	r.POST("/container/remove/:id", containerController.Remove)
 	r.GET("/container/status/:id", containerController.Status)
 	r.GET("/container/logs/:id", containerController.Logs)
+
+	r.GET("/project/list", projectController.List)
+	r.POST("/project/start/:projectName", projectController.Start)
+	r.POST("/project/stop/:projectName", projectController.Stop)
+	r.POST("/project/remove/:projectName", projectController.Remove)
 
 	_ = r.Run(":8086")
 }

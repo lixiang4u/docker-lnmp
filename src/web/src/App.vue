@@ -9,7 +9,7 @@ import {RouterView} from 'vue-router'</script>
 html {
 }
 *{
-  font-family: "Source Code Pro", "微软雅黑", Arial, Helvetica, sans-serif;
+  font-family: monospace, "微软雅黑", Arial, Helvetica, sans-serif;
 }
 a{
   color: #409eff;

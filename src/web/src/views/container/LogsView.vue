@@ -13,11 +13,8 @@
       </li>
     </ul>
 
-    <el-row>
-      <el-button type="primary" @click="startAll">一键启动</el-button>
-      <el-button type="warning" @click="stopAll">一键停止</el-button>
-      <el-button type="info" @click="rebuildConfirm">重新构建</el-button>
-    </el-row>
+    <br />
+    <br />
 
   </div>
 </template>
