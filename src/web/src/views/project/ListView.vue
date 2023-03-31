@@ -24,11 +24,11 @@
           <span class="p-status"></span>
           <span class="p-op">
             <font-awesome-icon :icon="['fas', 'play']" class="start"
-                               @click="onProjectStart(tmpList[0]['id']??'', tmpList[0]['labels']['project']??'')"/>&nbsp;
+                               @click="onProjectStart(getImageId(tmpList), getProjectName(tmpList))"/>&nbsp;
             <font-awesome-icon :icon="['fas', 'pause']" class="stop"
-                               @click="onProjectStop(tmpList[0]['id']??'', tmpList[0]['labels']['project']??'')"/>&nbsp;
+                               @click="onProjectStop(getImageId(tmpList), getProjectName(tmpList))"/>&nbsp;
             <font-awesome-icon :icon="['fas', 'trash']" class="stop"
-                               @click="onProjectRemoveConfirm(tmpList[0]['id']??'', tmpList[0]['labels']['project']??'')"/>
+                               @click="onProjectRemoveConfirm(getImageId(tmpList), getProjectName(tmpList))"/>
           </span>
         </li>
         <li v-for="(item, idx) in tmpList" v-bind:key="idx">
@@ -227,14 +227,37 @@ export default {
       }
       return ports.join(',')
     },
-    onProjectStart() {
-      //
+    getImageId(containerList) {
+      if (containerList instanceof Array && containerList.length > 0) {
+        return containerList[0]['id']
+      }
+      return ''
     },
-    onProjectStop(containerId, project) {
-      //	var containerId = ctx.Query("container_id")
-      // var projectName = ctx.Query("project")
-      //
-      axios.post('/project/stop', {container_id: containerId, project_name: project,}, {
+    getProjectName(containerList) {
+      if (containerList instanceof Array && containerList.length > 0) {
+        return containerList[0]['labels']['project']
+      }
+      return ''
+    },
+    onProjectStart(containerId, projectName) {
+      axios.post('/project/start', {container_id: containerId, project_name: projectName,}, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }).then((response) => {
+        console.log('[data]', response)
+        if (response.data['code'] === 200) {
+
+          ElMessage({message: response.data['msg'], type: 'success',})
+        } else {
+          ElMessage.error(response.data['msg'])
+        }
+      }).finally(() => {
+        this.getVirtualHost()
+      })
+    },
+    onProjectStop(containerId, projectName) {
+      axios.post('/project/stop', {container_id: containerId, project_name: projectName,}, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
@@ -245,10 +268,25 @@ export default {
         } else {
           ElMessage.error(response.data['msg'])
         }
+      }).finally(() => {
+        this.getVirtualHost()
       })
     },
-    onProjectRemoveConfirm() {
-      //
+    onProjectRemoveConfirm(containerId, projectName) {
+      axios.post('/project/remove', {container_id: containerId, project_name: projectName,}, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }).then((response) => {
+        console.log('[data]', response)
+        if (response.data['code'] === 200) {
+          ElMessage({message: response.data['msg'], type: 'success',})
+        } else {
+          ElMessage.error(response.data['msg'])
+        }
+      }).finally(() => {
+        this.getVirtualHost()
+      })
     },
   }
 }

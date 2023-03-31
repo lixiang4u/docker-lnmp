@@ -1,6 +1,9 @@
 package controller
 
 import (
+	"context"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
 	"github.com/lixiang4u/docker-lnmp/model"
@@ -43,13 +46,22 @@ func (x ProjectController) Start(ctx *gin.Context) {
 	var containerId = ctx.PostForm("container_id")
 	var projectName = ctx.PostForm("project_name")
 
+	var dClient = x.connect(ctx)
 	listSummary, err := x.findContainersByProjectOrId(x.connect(ctx), projectName, containerId)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": listSummary})
+	for _, tmpContainer := range listSummary {
+		err := dClient.ContainerStart(context.Background(), tmpContainer.Id, types.ContainerStartOptions{})
+		if err != nil {
+			ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": nil})
 	return
 }
 
@@ -57,13 +69,22 @@ func (x ProjectController) Stop(ctx *gin.Context) {
 	var containerId = ctx.PostForm("container_id")
 	var projectName = ctx.PostForm("project_name")
 
-	listSummary, err := x.findContainersByProjectOrId(x.connect(ctx), projectName, containerId)
+	var dClient = x.connect(ctx)
+	listSummary, err := x.findContainersByProjectOrId(dClient, projectName, containerId)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": listSummary})
+	for _, tmpContainer := range listSummary {
+		err := dClient.ContainerStop(context.Background(), tmpContainer.Id, container.StopOptions{})
+		if err != nil {
+			ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": nil})
 	return
 }
 
@@ -71,13 +92,24 @@ func (x ProjectController) Remove(ctx *gin.Context) {
 	var containerId = ctx.PostForm("container_id")
 	var projectName = ctx.PostForm("project_name")
 
-	listSummary, err := x.findContainersByProjectOrId(x.connect(ctx), projectName, containerId)
+	var dClient = x.connect(ctx)
+	listSummary, err := x.findContainersByProjectOrId(dClient, projectName, containerId)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": listSummary})
+	for _, tmpContainer := range listSummary {
+		err := dClient.ContainerRemove(context.Background(), tmpContainer.Id, types.ContainerRemoveOptions{
+			Force: true,
+		})
+		if err != nil {
+			ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": nil})
 	return
 }
 
