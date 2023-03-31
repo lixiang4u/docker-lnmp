@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import ComposeStatus from "../views/compose/StatusView.vue";
+import ContainerList from "../views/container/ListView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -7,7 +7,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: ComposeStatus
+      component: ContainerList
     },
     {
       path: '/host/list',
@@ -30,9 +30,9 @@ const router = createRouter({
       component: () => import('../views/host/ShowView.vue')
     },
     {
-      path: '/compose/status',
-      name: 'composeStatus',
-      component: () => import('../views/compose/StatusView.vue')
+      path: '/container/status',
+      name: 'containerStatus',
+      component: () => import('../views/container/ListView.vue')
     },
     {
       path: '/about',

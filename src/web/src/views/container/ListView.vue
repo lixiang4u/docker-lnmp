@@ -25,23 +25,26 @@
         </span>
         <span>
             <el-tooltip placement="top" :content="item['state']">
-              <el-icon><VideoPlay/></el-icon>
-              <el-icon><VideoPause/></el-icon>
-              {{ item['state'] }}
+              <font-awesome-icon v-if="item['state']==='exited'" :icon="['fas', 'stop']" class="stop"
+                                 @click="start(item['id'])"/>
+              <font-awesome-icon v-if="item['state']==='running'" :icon="['fas', 'play']" class="start"
+                                 @click="stop(item['id'])"/>
             </el-tooltip>
         </span>
         <span>
           <a href="#">
-            <el-tooltip placement="top" :content="listToString(item['ports'])">{{ listToString(item['ports']) }}</el-tooltip>
+            <el-tooltip placement="top" :content="listToString(item['ports'])">{{
+                listToString(item['ports'])
+              }}</el-tooltip>
           </a>
         </span>
         <span>
             <el-tooltip placement="top" :content="item['status']">{{ cutLastUpdateTime(item['status']) }}</el-tooltip>
         </span>
         <span>
-          [<el-link type="primary" :href="'/host/show/'+item['id']+'?op=show'">详情</el-link>]
-          [<el-link type="warning" :href="'/host/update/'+item['id']+'?op=update'">编辑</el-link>]
-          [<el-link type="danger" @click="onRemoveConfirm(item['id'])">删除</el-link>]
+          [<el-link type="primary" href="#">详情</el-link>]
+          [<el-link type="warning" href="#">编辑</el-link>]
+          [<el-link type="danger" href="#">删除</el-link>]
         </span>
       </li>
     </ul>
@@ -68,6 +71,12 @@ import axios from "axios";
 // import {ElMessage} from "element-plus";
 import Header from "@/components/Header.vue";
 import {VideoPause, VideoPlay} from "@element-plus/icons-vue";
+import {library} from '@fortawesome/fontawesome-svg-core';
+import {faPlay, faStop} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
+import {ElMessage} from "element-plus";
+
+library.add(faPlay, faStop)
 
 export default {
   name: "host-list",
@@ -81,8 +90,11 @@ export default {
   components: {
     // eslint-disable-next-line vue/no-reserved-component-names
     Header,
+    // eslint-disable-next-line vue/no-unused-components
     VideoPlay,
+    // eslint-disable-next-line vue/no-unused-components
     VideoPause,
+    'font-awesome-icon': FontAwesomeIcon,
   },
   created() {
   },
@@ -91,7 +103,7 @@ export default {
   },
   methods: {
     getVirtualHost() {
-      axios.get('/compose/status').then((response) => {
+      axios.get('/container/list').then((response) => {
         if (response.data['code'] === 200) {
           this.composeStatusList = response.data['data']
         }
@@ -108,8 +120,30 @@ export default {
       if (value == null) {
         return ''
       }
-      return value.join("\r\n")
-    }
+      return value.join(",")
+    },
+    start(id) {
+      axios.post('/container/start/' + id).then((response) => {
+        if (response.data['code'] === 200) {
+          ElMessage({message: response.data['msg'], type: 'success',})
+        } else {
+          ElMessage.error(response.data['msg'])
+        }
+      }).finally(() => {
+        this.getVirtualHost()
+      })
+    },
+    stop(id) {
+      axios.post('/container/stop/' + id).then((response) => {
+        if (response.data['code'] === 200) {
+          ElMessage({message: response.data['msg'], type: 'success',})
+        } else {
+          ElMessage.error(response.data['msg'])
+        }
+      }).finally(() => {
+        this.getVirtualHost()
+      })
+    },
   }
 }
 </script>
@@ -155,15 +189,28 @@ export default {
 }
 
 .container li > span:nth-child(4) {
-  width: 100px;
+  width: 70px;
+  text-align: center;
 }
 
 .container li > span:nth-child(5) {
-  width: 130px;
+  width: 150px;
 }
 
 .container li > span:nth-child(6) {
-  width: 120px;
+  width: 130px;
+}
+
+.stop {
+  font-size: 20px;
+  color: #6b6969;
+  cursor: pointer;
+}
+
+.start {
+  font-size: 20px;
+  color: rgba(0, 128, 0, 0.73);
+  cursor: pointer;
 }
 
 </style>

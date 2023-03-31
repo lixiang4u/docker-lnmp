@@ -51,17 +51,21 @@ func runServer() {
 
 	var hostController = new(controller.HostController)
 	var clientController = new(controller.DockerClientController)
-	var composeController = new(controller.ComposeController)
+	var containerController = new(controller.ContainerController)
+
 	r.GET("/host/init", hostController.Init)
 	r.GET("/host/list", hostController.List)
 	r.GET("/host/show/:id", hostController.Show)
 	r.POST("/host/create", hostController.Create)
 	r.PUT("/host/update/:id", hostController.Update)
 	r.DELETE("/host/delete/:id", hostController.Delete)
+
 	r.GET("/docker/images", clientController.Images)
-	r.GET("/docker/containers", clientController.Containers)
-	r.GET("/docker/container/stop", clientController.Stop)
-	r.GET("/compose/status", composeController.Status)
+
+	r.GET("/container/list", containerController.List)
+	r.POST("/container/start/:id", containerController.Start)
+	r.POST("/container/stop/:id", containerController.Stop)
+	r.GET("/container/status/:id", containerController.Status)
 
 	_ = r.Run(":8086")
 }
