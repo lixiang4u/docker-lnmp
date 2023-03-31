@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func ToJson(v any) string {
@@ -33,4 +34,17 @@ func AppDirectory() string {
 		return ""
 	}
 	return filepath.Dir(filepath.Dir(dir))
+}
+
+func DockerLogFormat(s string) []string {
+	var strList []string
+	for _, line := range strings.Split(s, "\n") {
+		line = strings.TrimSpace(line)
+		// "2023-03-30T09:30:23.339998298Z  High performance, minimalist Go web framework\r",
+		if len(line) >= 30 && line[10:11] == "T" && line[29:30] == "Z" {
+			line = fmt.Sprintf("%s %s%s", line[0:10], line[11:19], line[30:])
+		}
+		strList = append(strList, line)
+	}
+	return strList
 }

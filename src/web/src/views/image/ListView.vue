@@ -25,18 +25,12 @@
         <span class="p-image">
           <el-tooltip placement="top" :content="splitTag(item['tag'],1)">{{ splitTag(item['tag'], 1) }}</el-tooltip>
         </span>
-        <span class="p-created">
-            <el-tooltip placement="top" :content="formatTime(item['created_at'])">
-              {{ formatTime(item['created_at']) }}
-            </el-tooltip>
-        </span>
-        <span class="p-size p-size-text">
-            <el-tooltip placement="top" :content="formatSize(item['size'])">{{ formatSize(item['size']) }}</el-tooltip>
-        </span>
-        <span class="p-op" style="text-decoration: line-through">
-          [<el-link type="primary" href="#">详情</el-link>]
-          [<el-link type="warning" href="#">编辑</el-link>]
-          [<el-link type="danger" href="#">删除</el-link>]
+        <span class="p-created">{{ formatTime(item['created_at']) }}</span>
+        <span class="p-size p-size-text">{{ formatSize(item['size']) }}</span>
+        <span class="p-op">
+          [<el-link type="primary" :href="'/container/list/?image_id='+item['id']">详情</el-link>]
+          [<el-link type="warning" href="#" style="text-decoration: line-through">编辑</el-link>]
+          [<el-link type="danger" @click="removeImageConfirm(item['id'])">删除</el-link>]
         </span>
       </li>
     </ul>
@@ -52,16 +46,18 @@
         title="提示"
         width="30%"
     >
-      <span>确定重新构建吗？</span>
+      <span>{{ dialogContent }}</span>
       <template #footer>
       <span class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="onRebuild">
+        <el-button type="primary" @click="dialogOnClick">
           确认
         </el-button>
       </span>
       </template>
     </el-dialog>
+
+    <br /><br />
   </div>
 </template>
 <script>
@@ -82,6 +78,8 @@ export default {
     return {
       imageList: [],
       dialogVisible: false,
+      dialogContent: '',
+      dialogOnClick: '',
       removeId: null,
       loading: false,
     }
@@ -159,8 +157,9 @@ export default {
       }
     },
     rebuildConfirm() {
+      this.dialogContent = '确定重新构建吗？'
       this.dialogVisible = true
-
+      this.dialogOnClick = this.onRebuild
     },
     onRebuild() {
       this.dialogVisible = false
@@ -184,7 +183,27 @@ export default {
         size = size / 1024;
       }
       return (unit === 'B' ? size : size.toFixed(pointLength === undefined ? 2 : pointLength)) + unit;
-    }
+    },
+    removeImageConfirm(id) {
+      this.removeId = id
+      this.dialogContent = '确定删除镜像吗？'
+      this.dialogVisible = true
+      this.dialogOnClick = this.onRemoveImage
+    },
+    onRemoveImage() {
+      this.dialogVisible = false
+      this.showLoading()
+      axios.delete('/image/remove/' + this.removeId).then((response) => {
+        if (response.data['code'] === 200) {
+          ElMessage({message: response.data['msg'], type: 'success',})
+        } else {
+          ElMessage.error(response.data['msg'])
+        }
+      }).finally(() => {
+        this.loading.close()
+        this.getVirtualHost()
+      })
+    },
   },
 }
 </script>
@@ -221,15 +240,15 @@ export default {
 }
 
 .container li > span.p-id {
-  width: 90px;
+  width: 100px;
 }
 
 .container li > span.p-name {
-  width: 240px;
+  width: 280px;
 }
 
 .container li > span.p-image {
-  width: 160px;
+  width: 180px;
 }
 
 .container li > span.p-created {

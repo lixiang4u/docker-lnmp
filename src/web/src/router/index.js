@@ -35,6 +35,11 @@ const router = createRouter({
       component: () => import('../views/container/ListView.vue')
     },
     {
+      path: '/container/logs/:id',
+      name: 'containerLogs',
+      component: () => import('../views/container/LogsView.vue')
+    },
+    {
       path: '/image/list',
       name: 'imageList',
       component: () => import('../views/image/ListView.vue')

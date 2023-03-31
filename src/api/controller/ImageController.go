@@ -61,7 +61,8 @@ func (x ImageController) Remove(ctx *gin.Context) {
 	var id = ctx.Param("id")
 	dClient := x.connect(ctx)
 	_, err := dClient.ImageRemove(context.Background(), id, types.ImageRemoveOptions{
-		Force: true,
+		Force:         true,
+		PruneChildren: true,
 	})
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})

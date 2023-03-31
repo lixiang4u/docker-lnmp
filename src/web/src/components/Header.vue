@@ -7,10 +7,10 @@
       <el-text class="mx-1" size="large">docker-lnmp</el-text>
     </el-menu-item>
 
-    <el-menu-item index="3" @click="this.$router.push({name: 'imageList'})">镜像列表</el-menu-item>
+    <el-menu-item index="2" @click="this.$router.push({name: 'imageList'})">镜像列表</el-menu-item>
     <el-menu-item index="3" @click="this.$router.push({name: 'containerList'})">容器列表</el-menu-item>
-    <el-menu-item index="3" @click="this.$router.push({name: 'hostList'})">站点列表</el-menu-item>
-    <el-menu-item index="4" @click="goCreate">添加站点</el-menu-item>
+    <el-menu-item index="4" @click="this.$router.push({name: 'hostList'})">站点列表</el-menu-item>
+    <el-menu-item index="5" @click="goCreate">添加站点</el-menu-item>
   </el-menu>
 </template>
 

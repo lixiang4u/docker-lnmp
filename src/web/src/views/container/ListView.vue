@@ -42,9 +42,8 @@
         <span class="p-status p-status-text">
             <el-tooltip placement="top" :content="item['status']">{{ cutLastUpdateTime(item['status']) }}</el-tooltip>
         </span>
-        <span class="p-op" style="text-decoration: line-through">
-          [<el-link type="primary" href="#">详情</el-link>]
-          [<el-link type="warning" href="#">编辑</el-link>]
+        <span class="p-op">
+          [<el-link type="warning" :href="'/container/logs/'+item['id']">日志</el-link>]
           [<el-link type="danger" href="#">删除</el-link>]
         </span>
       </li>
@@ -71,6 +70,9 @@
       </span>
       </template>
     </el-dialog>
+
+    <br /><br />
+
   </div>
 </template>
 <script>
@@ -93,6 +95,9 @@ export default {
       dialogVisible: false,
       removeId: null,
       loading: false,
+      search: {
+        imageId: '',
+      },
     }
   },
   components: {
@@ -107,11 +112,12 @@ export default {
   created() {
   },
   mounted() {
+    this.search.imageId = this.$route.query['image_id'] ?? '';
     this.getVirtualHost()
   },
   methods: {
     getVirtualHost() {
-      axios.get('/container/list').then((response) => {
+      axios.get('/container/list?image_id=' + this.search.imageId).then((response) => {
         if (response.data['code'] === 200) {
           this.containerList = response.data['data']
         }
@@ -222,20 +228,20 @@ export default {
 }
 
 .container li > span.p-name {
-  width: 200px;
+  width: 240px;
 }
 
 .container li > span.p-image {
-  width: 200px;
+  width: 230px;
 }
 
 .container li > span.p-state {
-  width: 70px;
+  width: 90px;
   text-align: center;
 }
 
 .container li > span.p-ports {
-  width: 150px;
+  width: 180px;
 }
 
 .container li > span.p-status {

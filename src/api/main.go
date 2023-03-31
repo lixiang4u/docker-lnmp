@@ -61,13 +61,14 @@ func runServer() {
 	r.DELETE("/host/delete/:id", hostController.Delete)
 
 	r.GET("/image/list", imageController.List)
-	r.DELETE("/image/remove", imageController.Remove)
+	r.DELETE("/image/remove/:id", imageController.Remove)
 
 	r.GET("/container/list", containerController.List)
 	r.POST("/container/start/:id", containerController.Start)
 	r.POST("/container/stop/:id", containerController.Stop)
 	r.POST("/container/remove/:id", containerController.Remove)
 	r.GET("/container/status/:id", containerController.Status)
+	r.GET("/container/logs/:id", containerController.Logs)
 
 	_ = r.Run(":8086")
 }
