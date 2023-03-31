@@ -13,7 +13,7 @@
         <span class="p-status">最近启动时间</span>
         <span class="p-op">操作</span>
       </li>
-      <div v-for="(tmpList, projectName, projectIdx) in containerList" v-bind:key="projectName">
+      <div class="project-block" v-for="(tmpList, projectName, projectIdx) in containerList" v-bind:key="projectName">
         <li class="project">
           <span class="p-idx">{{ projectIdx + 1 }}</span>
           <span class="p-project">{{ projectName }}</span>
@@ -258,7 +258,15 @@ export default {
 }
 
 .container .list li:hover {
-  border-bottom: 1px solid #2c3e50;
+  border-bottom: 1px solid #c3c3c3;
+}
+
+.project-block:hover {
+  border-left: 6px solid #c3c3c3;
+}
+
+.project-block:hover li {
+  padding-left: 10px;
 }
 
 .container li > span {
