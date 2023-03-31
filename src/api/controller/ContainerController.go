@@ -36,10 +36,10 @@ func (x ContainerController) List(ctx *gin.Context) {
 	var resultList []any
 	for _, item := range listSummary {
 		if _, ok := item.Labels["com.docker.compose.project"]; !ok {
-			//continue
+			continue
 		}
 		if item.Labels["com.docker.compose.project"] != config.AppName {
-			//continue
+			continue
 		}
 
 		var ports []string

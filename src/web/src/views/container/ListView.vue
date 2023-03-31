@@ -5,43 +5,45 @@
 
     <ul class="list">
       <li class="title">
-        <span>序号</span>
-        <span>名称</span>
-        <span>镜像</span>
-        <span>状态</span>
-        <span>端口</span>
-        <span>最近启动时间</span>
-        <span>操作</span>
+        <span class="p-idx">#</span>
+        <span class="p-id">ID</span>
+        <span class="p-name">名称</span>
+        <span class="p-image">镜像</span>
+        <span class="p-state">状态</span>
+        <span class="p-ports">端口</span>
+        <span class="p-status">最近启动时间</span>
+        <span class="p-op">操作</span>
       </li>
       <li v-for="(item, idx) in composeStatusList" v-bind:key="idx">
-        <span>{{ idx + 1 }}</span>
-        <span>
+        <span class="p-idx">{{ idx + 1 }}</span>
+        <span class="p-id">
+          <el-tooltip placement="top" :content="item['id']+' : '+ item['id']">{{ item['id'] }}</el-tooltip>
+        </span>
+        <span class="p-name">
           <el-tooltip placement="top" :content="item['name']+' : '+ item['id']">{{ item['name'] }}</el-tooltip>
         </span>
-        <span>
+        <span class="p-image">
           <a href="#">
             <el-tooltip placement="top" :content="item['image']">{{ item['image'] }}</el-tooltip>
           </a>
         </span>
-        <span>
+        <span class="p-state">
             <el-tooltip placement="top" :content="item['state']">
-              <font-awesome-icon v-if="item['state']==='exited'" :icon="['fas', 'stop']" class="stop"
+              <font-awesome-icon v-if="item['state']==='exited'" :icon="['fas', 'pause']" class="stop"
                                  @click="start(item['id'])"/>
               <font-awesome-icon v-if="item['state']==='running'" :icon="['fas', 'play']" class="start"
                                  @click="stop(item['id'])"/>
             </el-tooltip>
         </span>
-        <span>
-          <a href="#">
-            <el-tooltip placement="top" :content="listToString(item['ports'])">{{
-                listToString(item['ports'])
-              }}</el-tooltip>
-          </a>
+        <span class="p-ports">
+          <el-tooltip placement="top" :content="listToString(item['ports'])">
+            {{ listToString(item['ports']) }}
+          </el-tooltip>
         </span>
-        <span>
+        <span class="p-status p-status-text">
             <el-tooltip placement="top" :content="item['status']">{{ cutLastUpdateTime(item['status']) }}</el-tooltip>
         </span>
-        <span>
+        <span class="p-op" style="text-decoration: line-through">
           [<el-link type="primary" href="#">详情</el-link>]
           [<el-link type="warning" href="#">编辑</el-link>]
           [<el-link type="danger" href="#">删除</el-link>]
@@ -72,11 +74,11 @@ import axios from "axios";
 import Header from "@/components/Header.vue";
 import {VideoPause, VideoPlay} from "@element-plus/icons-vue";
 import {library} from '@fortawesome/fontawesome-svg-core';
-import {faPlay, faStop} from '@fortawesome/free-solid-svg-icons';
+import {faPause, faPlay, faStop} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
 import {ElLoading, ElMessage} from "element-plus";
 
-library.add(faPlay, faStop)
+library.add(faPlay, faStop, faPause)
 
 export default {
   name: "host-list",
@@ -188,30 +190,40 @@ export default {
   padding: 0 6px 0 6px;
 }
 
-.container li > span:nth-child(1) {
-  width: 50px;
+.container li > span.p-idx {
+  width: 24px;
 }
 
-.container li > span:nth-child(2) {
+.container li > span.p-id {
+  width: 80px;
+}
+
+.container li > span.p-name {
   width: 200px;
 }
 
-.container li > span:nth-child(3) {
+.container li > span.p-image {
   width: 200px;
 }
 
-.container li > span:nth-child(4) {
+.container li > span.p-state {
   width: 70px;
   text-align: center;
 }
 
-.container li > span:nth-child(5) {
+.container li > span.p-ports {
   width: 150px;
 }
 
-.container li > span:nth-child(6) {
-  width: 130px;
+.container li > span.p-status {
+  width: 120px;
 }
+
+.container li > span.p-status-text {
+  font-size: 12px;
+  color: #6b6969;
+}
+
 
 .stop {
   font-size: 20px;
