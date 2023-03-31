@@ -6,41 +6,32 @@
       <li class="title">
         <span class="p-idx">#</span>
         <span class="p-id">ID</span>
-        <span class="p-name">名称</span>
-        <span class="p-image">镜像</span>
-        <span class="p-state">状态</span>
-        <span class="p-ports">端口</span>
-        <span class="p-status">最近启动时间</span>
+        <span class="p-name">镜像名称</span>
+        <span class="p-image">TAG</span>
+        <span class="p-created">创建时间</span>
+        <span class="p-size">大小</span>
         <span class="p-op">操作</span>
       </li>
-      <li v-for="(item, idx) in containerList" v-bind:key="idx">
+      <li v-for="(item, idx) in imageList" v-bind:key="idx">
         <span class="p-idx">{{ idx + 1 }}</span>
         <span class="p-id">
-          <el-tooltip placement="top" :content="item['id']+' : '+ item['id']">{{ item['id'] }}</el-tooltip>
+          <el-tooltip placement="top" :content="item['id']">{{ item['id'] }}</el-tooltip>
         </span>
         <span class="p-name">
-          <el-tooltip placement="top" :content="item['name']+' : '+ item['id']">{{ item['name'] }}</el-tooltip>
-        </span>
-        <span class="p-image">
           <a href="#">
-            <el-tooltip placement="top" :content="item['image']">{{ item['image'] }}</el-tooltip>
+            <el-tooltip placement="top" :content="item['tag']">{{ splitTag(item['tag'], 0) }}</el-tooltip>
           </a>
         </span>
-        <span class="p-state">
-            <el-tooltip placement="top" :content="item['state']">
-              <font-awesome-icon v-if="item['state']==='exited'" :icon="['fas', 'pause']" class="stop"
-                                 @click="start(item['id'])"/>
-              <font-awesome-icon v-if="item['state']==='running'" :icon="['fas', 'play']" class="start"
-                                 @click="stop(item['id'])"/>
+        <span class="p-image">
+          <el-tooltip placement="top" :content="splitTag(item['tag'],1)">{{ splitTag(item['tag'], 1) }}</el-tooltip>
+        </span>
+        <span class="p-created">
+            <el-tooltip placement="top" :content="formatTime(item['created_at'])">
+              {{ formatTime(item['created_at']) }}
             </el-tooltip>
         </span>
-        <span class="p-ports">
-          <el-tooltip placement="top" :content="listToString(item['ports'])">
-            {{ listToString(item['ports']) }}
-          </el-tooltip>
-        </span>
-        <span class="p-status p-status-text">
-            <el-tooltip placement="top" :content="item['status']">{{ cutLastUpdateTime(item['status']) }}</el-tooltip>
+        <span class="p-size p-size-text">
+            <el-tooltip placement="top" :content="formatSize(item['size'])">{{ formatSize(item['size']) }}</el-tooltip>
         </span>
         <span class="p-op" style="text-decoration: line-through">
           [<el-link type="primary" href="#">详情</el-link>]
@@ -89,7 +80,7 @@ export default {
   name: "host-list",
   data() {
     return {
-      containerList: [],
+      imageList: [],
       dialogVisible: false,
       removeId: null,
       loading: false,
@@ -102,6 +93,7 @@ export default {
     VideoPlay,
     // eslint-disable-next-line vue/no-unused-components
     VideoPause,
+    // eslint-disable-next-line vue/no-unused-components
     'font-awesome-icon': FontAwesomeIcon,
   },
   created() {
@@ -111,18 +103,11 @@ export default {
   },
   methods: {
     getVirtualHost() {
-      axios.get('/container/list').then((response) => {
+      axios.get('/image/list').then((response) => {
         if (response.data['code'] === 200) {
-          this.containerList = response.data['data']
+          this.imageList = response.data['data']
         }
       })
-    },
-    cutLastUpdateTime(value) {
-      let arr = value.split(") ")
-      if (arr.length > 1) {
-        return arr[1]
-      }
-      return arr[0]
     },
     listToString(value) {
       if (value == null) {
@@ -164,13 +149,13 @@ export default {
       })
     },
     startAll() {
-      for (const key in this.containerList) {
-        this.start(this.containerList[key]['id'])
+      for (const key in this.imageList) {
+        this.start(this.imageList[key]['id'])
       }
     },
     stopAll() {
-      for (const key in this.containerList) {
-        this.stop(this.containerList[key]['id'])
+      for (const key in this.imageList) {
+        this.stop(this.imageList[key]['id'])
       }
     },
     rebuildConfirm() {
@@ -180,8 +165,27 @@ export default {
     onRebuild() {
       this.dialogVisible = false
       ElMessage({message: '重构中', type: 'success',})
+    },
+    splitTag(tagName, idx) {
+      const tmpArr = tagName.split(':')
+      if (tmpArr.length > 1) {
+        return tmpArr[idx]
+      } else {
+        return tmpArr[0]
+      }
+    },
+    formatTime(timestamp) {
+      return (new Date(timestamp * 1000).toLocaleString()).substring(0, 15);
+    },
+    formatSize(size, pointLength, units) {
+      let unit;
+      units = units || ['B', 'K', 'M', 'G', 'TB'];
+      while ((unit = units.shift()) && size > 1024) {
+        size = size / 1024;
+      }
+      return (unit === 'B' ? size : size.toFixed(pointLength === undefined ? 2 : pointLength)) + unit;
     }
-  }
+  },
 }
 </script>
 <style scoped>
@@ -194,7 +198,6 @@ export default {
 
 .container li.title span {
   font-weight: bold;
-  /*text-align: center;*/
 }
 
 .container .list li {
@@ -218,35 +221,24 @@ export default {
 }
 
 .container li > span.p-id {
-  width: 80px;
+  width: 90px;
 }
 
 .container li > span.p-name {
-  width: 200px;
+  width: 240px;
 }
 
 .container li > span.p-image {
+  width: 160px;
+}
+
+.container li > span.p-created {
   width: 200px;
 }
 
-.container li > span.p-state {
-  width: 70px;
-  text-align: center;
+.container li > span.p-size {
+  width: 110px;
 }
-
-.container li > span.p-ports {
-  width: 150px;
-}
-
-.container li > span.p-status {
-  width: 120px;
-}
-
-.container li > span.p-status-text {
-  font-size: 12px;
-  color: #6b6969;
-}
-
 
 .stop {
   font-size: 20px;

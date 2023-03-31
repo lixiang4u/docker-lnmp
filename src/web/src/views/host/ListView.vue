@@ -4,7 +4,7 @@
 
     <ul class="list">
       <li class="title">
-        <span>序号</span>
+        <span>#</span>
         <span>名称</span>
         <span>域名</span>
         <span>根目录</span>
@@ -30,8 +30,8 @@
           </el-tooltip>
         </span>
         <span>
-          [<el-link type="primary" :href="'/host/show/'+item['id']+'?op=show'">详情</el-link>]
-          [<el-link type="warning" :href="'/host/update/'+item['id']+'?op=update'">编辑</el-link>]
+          [<el-link type="primary" :href="'/host/show/'+item['id']+'?op=show'" target="_blank">详情</el-link>]
+          [<el-link type="warning" :href="'/host/update/'+item['id']+'?op=update'" target="_blank">编辑</el-link>]
           [<el-link type="danger" @click="onRemoveConfirm(item['id'])">删除</el-link>]
         </span>
       </li>
@@ -100,6 +100,7 @@ export default {
       }).finally(() => {
         this.dialogVisible = false
         this.removeId = ''
+        this.getVirtualHost()
       })
     },
     goList() {
@@ -141,7 +142,7 @@ export default {
 }
 
 .container li > span:nth-child(1) {
-  width: 50px;
+  width: 24px;
 }
 
 .container li > span:nth-child(2) {

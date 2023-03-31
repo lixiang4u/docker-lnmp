@@ -29,17 +29,6 @@ func (x DockerClientController) connect(ctx *gin.Context) *client.Client {
 	return _clientInstance
 }
 
-func (x DockerClientController) Images(ctx *gin.Context) {
-	dClient := x.connect(ctx)
-	imagesListSummary, err := dClient.ImageList(context.Background(), types.ImageListOptions{})
-	if err != nil {
-		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
-		return
-	}
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "", "data": imagesListSummary})
-	return
-}
-
 func (x DockerClientController) Containers(ctx *gin.Context) {
 	dClient := x.connect(ctx)
 	containerListSummary, err := dClient.ContainerList(context.Background(), types.ContainerListOptions{

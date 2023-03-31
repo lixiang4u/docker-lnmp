@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
 	"github.com/lixiang4u/docker-lnmp/config"
@@ -27,8 +28,13 @@ func (x ContainerController) connect(ctx *gin.Context) *client.Client {
 }
 
 func (x ContainerController) List(ctx *gin.Context) {
+	var imageId = ctx.Query("image_id")
+
 	dClient := x.connect(ctx)
-	listSummary, err := dClient.ContainerList(context.Background(), types.ContainerListOptions{All: true})
+	listSummary, err := dClient.ContainerList(context.Background(), types.ContainerListOptions{
+		All:     true,
+		Filters: filters.NewArgs(filters.Arg("ancestor", imageId)),
+	})
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
@@ -36,10 +42,10 @@ func (x ContainerController) List(ctx *gin.Context) {
 	var resultList []any
 	for _, item := range listSummary {
 		if _, ok := item.Labels["com.docker.compose.project"]; !ok {
-			continue
+			//continue
 		}
 		if item.Labels["com.docker.compose.project"] != config.AppName {
-			continue
+			//continue
 		}
 
 		var ports []string
@@ -114,5 +120,19 @@ func (x ContainerController) Status(ctx *gin.Context) {
 	err = json.NewDecoder(stats.Body).Decode(&v)
 
 	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "", "data": stats, "v": v})
+	return
+}
+
+func (x ContainerController) Remove(ctx *gin.Context) {
+	var id = ctx.Param("id")
+	dClient := x.connect(ctx)
+	err := dClient.ContainerRemove(context.Background(), id, types.ContainerRemoveOptions{
+		Force: true,
+	})
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "容器已经移除", "data": nil})
 	return
 }
