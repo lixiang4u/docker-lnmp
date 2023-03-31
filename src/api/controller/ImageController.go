@@ -3,10 +3,13 @@ package controller
 import (
 	"context"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
 	"github.com/lixiang4u/docker-lnmp/config"
 	"github.com/lixiang4u/docker-lnmp/util"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"net/http"
 )
 
@@ -23,6 +26,7 @@ func (x ImageController) connect(ctx *gin.Context) *client.Client {
 }
 
 func (x ImageController) List(ctx *gin.Context) {
+	var project = ctx.Query("project")
 	dClient := x.connect(ctx)
 	listSummary, err := dClient.ImageList(context.Background(), types.ImageListOptions{
 		All: true,
@@ -33,11 +37,13 @@ func (x ImageController) List(ctx *gin.Context) {
 	}
 	var resultList []any
 	for _, item := range listSummary {
-		if _, ok := item.Labels["com.docker.compose.project"]; !ok {
-			//continue
-		}
-		if item.Labels["com.docker.compose.project"] != config.AppName {
-			//continue
+		if project != "all" {
+			if _, ok := item.Labels["com.docker.compose.project"]; !ok {
+				continue
+			}
+			if item.Labels["com.docker.compose.project"] != config.AppName {
+				continue
+			}
 		}
 		resultList = append(resultList, gin.H{
 			"id":  item.ID[7 : 7+8],
@@ -70,4 +76,27 @@ func (x ImageController) Remove(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "镜像已经移除", "data": nil})
 	return
+}
+
+func (x ImageController) Run(ctx *gin.Context) {
+	//var id = ctx.Param("id")
+
+	dClient := x.connect(ctx)
+	_, err := dClient.ContainerCreate(
+		context.Background(),
+		&container.Config{
+			Hostname: "",
+		},
+		&container.HostConfig{},
+		&network.NetworkingConfig{},
+		&v1.Platform{},
+		"xxx",
+	)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "镜像已经移除", "data": nil})
+	return
+	//		_, err := c.ContainerCreate(ctx, &containertypes.Config{Image: "busybox:latest"}, &containertypes.HostConfig{}, nil, &p, "")
 }

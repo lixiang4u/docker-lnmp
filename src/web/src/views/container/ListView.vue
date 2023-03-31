@@ -6,7 +6,7 @@
       <li class="title">
         <span class="p-idx">#</span>
         <span class="p-id">ID</span>
-        <span class="p-name">名称</span>
+        <span class="p-name">容器名称</span>
         <span class="p-image">镜像</span>
         <span class="p-state">状态</span>
         <span class="p-ports">端口</span>
@@ -22,9 +22,9 @@
           <el-tooltip placement="top" :content="item['name']+' : '+ item['id']">{{ item['name'] }}</el-tooltip>
         </span>
         <span class="p-image">
-          <a href="#">
+          <router-link :to="{name: 'imageList', query: {project: 'all'}}">
             <el-tooltip placement="top" :content="item['image']">{{ item['image'] }}</el-tooltip>
-          </a>
+          </router-link>
         </span>
         <span class="p-state">
             <el-tooltip placement="top" :content="item['state']">

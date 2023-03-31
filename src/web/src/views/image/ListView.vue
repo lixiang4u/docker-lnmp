@@ -29,7 +29,7 @@
         <span class="p-size p-size-text">{{ formatSize(item['size']) }}</span>
         <span class="p-op">
           [<el-link type="primary" :href="'/container/list/?image_id='+item['id']">详情</el-link>]
-          [<el-link type="warning" href="#" style="text-decoration: line-through">编辑</el-link>]
+          [<el-link type="success">运行</el-link>]
           [<el-link type="danger" @click="removeImageConfirm(item['id'])">删除</el-link>]
         </span>
       </li>
@@ -57,7 +57,7 @@
       </template>
     </el-dialog>
 
-    <br /><br />
+    <br/><br/>
   </div>
 </template>
 <script>
@@ -66,11 +66,11 @@ import axios from "axios";
 import Header from "@/components/Header.vue";
 import {VideoPause, VideoPlay} from "@element-plus/icons-vue";
 import {library} from '@fortawesome/fontawesome-svg-core';
-import {faPause, faPlay, faStop} from '@fortawesome/free-solid-svg-icons';
+import {faCircleInfo, faPause, faPlay, faStop, faRemove} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
 import {ElLoading, ElMessage} from "element-plus";
 
-library.add(faPlay, faStop, faPause)
+library.add(faPlay, faStop, faPause, faCircleInfo,faRemove)
 
 export default {
   name: "host-list",
@@ -82,6 +82,9 @@ export default {
       dialogOnClick: '',
       removeId: null,
       loading: false,
+      search: {
+        project: '',
+      },
     }
   },
   components: {
@@ -93,15 +96,23 @@ export default {
     VideoPause,
     // eslint-disable-next-line vue/no-unused-components
     'font-awesome-icon': FontAwesomeIcon,
+  },// vue中切换路由，其中只有query参数变了，其他路径不变，导致页面没有重新请求相关数据
+  beforeRouteUpdate(to, from, next) {
+    if (to.query['project'] !== from.query['project']) {
+      this.search.project = to.query['project'] ?? '';
+      this.getVirtualHost()
+    }
+    next()
   },
   created() {
   },
   mounted() {
+    this.search.project = this.$route.query['project'] ?? '';
     this.getVirtualHost()
   },
   methods: {
     getVirtualHost() {
-      axios.get('/image/list').then((response) => {
+      axios.get('/image/list?project=' + this.search.project).then((response) => {
         if (response.data['code'] === 200) {
           this.imageList = response.data['data']
         }
