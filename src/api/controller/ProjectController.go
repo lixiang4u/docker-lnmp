@@ -3,6 +3,7 @@ package controller
 import (
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
+	"github.com/lixiang4u/docker-lnmp/model"
 	"github.com/lixiang4u/docker-lnmp/util"
 	"net/http"
 )
@@ -39,19 +40,63 @@ func (x ProjectController) List(ctx *gin.Context) {
 }
 
 func (x ProjectController) Start(ctx *gin.Context) {
-	var projectName = ctx.Param("projectName")
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": projectName})
+	var containerId = ctx.PostForm("container_id")
+	var projectName = ctx.PostForm("project_name")
+
+	listSummary, err := x.findContainersByProjectOrId(x.connect(ctx), projectName, containerId)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": listSummary})
 	return
 }
 
 func (x ProjectController) Stop(ctx *gin.Context) {
-	var projectName = ctx.Param("projectName")
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": projectName})
+	var containerId = ctx.PostForm("container_id")
+	var projectName = ctx.PostForm("project_name")
+
+	listSummary, err := x.findContainersByProjectOrId(x.connect(ctx), projectName, containerId)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": listSummary})
 	return
 }
 
 func (x ProjectController) Remove(ctx *gin.Context) {
-	var projectName = ctx.Param("projectName")
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": projectName})
+	var containerId = ctx.PostForm("container_id")
+	var projectName = ctx.PostForm("project_name")
+
+	listSummary, err := x.findContainersByProjectOrId(x.connect(ctx), projectName, containerId)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": listSummary})
 	return
+}
+
+// 根据项目名或者容器ID查找容器列表（项目名优先）
+func (x ContainerController) findContainersByProjectOrId(dockerClient *client.Client, projectName, containerId string) ([]model.Container, error) {
+	if projectName != "" {
+		return x.findContainers(dockerClient, "", projectName)
+	}
+
+	listSummary, err := x.findContainers(dockerClient, "", "")
+	if err != nil {
+		return nil, err
+	}
+	var resultList []model.Container
+	for _, item := range listSummary {
+		if item.Id != containerId {
+			continue
+		}
+		resultList = append(resultList, item)
+	}
+	return resultList, nil
 }

@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import RootComponent from "../views/container/ListView.vue";
+import RootComponent from "../views/project/ListView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

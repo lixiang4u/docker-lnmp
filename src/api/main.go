@@ -72,9 +72,9 @@ func runServer() {
 	r.GET("/container/logs/:id", containerController.Logs)
 
 	r.GET("/project/list", projectController.List)
-	r.POST("/project/start/:projectName", projectController.Start)
-	r.POST("/project/stop/:projectName", projectController.Stop)
-	r.POST("/project/remove/:projectName", projectController.Remove)
+	r.POST("/project/start", projectController.Start)
+	r.POST("/project/stop", projectController.Stop)
+	r.POST("/project/remove", projectController.Remove)
 
 	_ = r.Run(":8086")
 }
