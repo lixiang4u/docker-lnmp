@@ -79,11 +79,11 @@
         title="提示"
         width="30%"
     >
-      <span>确定重新构建吗？</span>
+      <span>{{ dialogContent }}</span>
       <template #footer>
       <span class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="onRebuild">
+        <el-button type="primary" @click="dialogOnClick">
           确认
         </el-button>
       </span>
@@ -112,6 +112,8 @@ export default {
     return {
       containerList: [],
       dialogVisible: false,
+      dialogContent: '',
+      dialogOnClick: '',
       removeId: null,
       loading: false,
       search: {
@@ -272,7 +274,7 @@ export default {
         this.getVirtualHost()
       })
     },
-    onProjectRemoveConfirm(containerId, projectName) {
+    onProjectRemove(containerId, projectName) {
       axios.post('/project/remove', {container_id: containerId, project_name: projectName,}, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -287,6 +289,13 @@ export default {
       }).finally(() => {
         this.getVirtualHost()
       })
+    },
+    onProjectRemoveConfirm(containerId, projectName) {
+      this.dialogContent = '确定删除镜像吗？'
+      this.dialogVisible = true
+      this.dialogOnClick = () => {
+        this.onProjectRemove(containerId, projectName)
+      }
     },
   }
 }
