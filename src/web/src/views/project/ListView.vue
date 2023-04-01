@@ -16,19 +16,31 @@
       <div class="project-block" v-for="(tmpList, projectName, projectIdx) in containerList" v-bind:key="projectName">
         <li class="project">
           <span class="p-idx">{{ projectIdx + 1 }}</span>
-          <span class="p-project">{{ projectName }}</span>
+          <span class="p-project">
+            <el-tooltip placement="top" :content="projectName">{{ projectName }}</el-tooltip>
+          </span>
           <span class="p-name"></span>
           <span class="p-image"></span>
           <span class="p-state">({{ getActiveCount(tmpList) }}/{{ tmpList.length }})</span>
           <span class="p-ports"></span>
           <span class="p-status"></span>
           <span class="p-op">
-            <font-awesome-icon :icon="['fas', 'play']" class="start"
-                               @click="onProjectStart(getImageId(tmpList), getProjectName(tmpList))"/>&nbsp;
-            <font-awesome-icon :icon="['fas', 'pause']" class="stop"
-                               @click="onProjectStop(getImageId(tmpList), getProjectName(tmpList))"/>&nbsp;
-            <font-awesome-icon :icon="['fas', 'trash']" class="stop"
-                               @click="onProjectRemoveConfirm(getImageId(tmpList), getProjectName(tmpList))"/>
+            <el-tooltip placement="top" content="启动">
+              <font-awesome-icon :icon="['fas', 'play']" class="start"
+                                 @click="onProjectStart(getImageId(tmpList), getProjectName(tmpList))"/>
+            </el-tooltip>
+            <el-tooltip placement="top" content="停止">
+              <font-awesome-icon :icon="['fas', 'pause']" class="stop"
+                                 @click="onProjectStop(getImageId(tmpList), getProjectName(tmpList))"/>
+            </el-tooltip>
+            <el-tooltip placement="top" content="重新构建">
+              <font-awesome-icon :icon="['fas', 'fa-repeat']" class="stop"
+                                 @click="onProjectRebuildConfirm(getImageId(tmpList), getProjectName(tmpList))"/>
+            </el-tooltip>
+            <el-tooltip placement="top" content="删除">
+              <font-awesome-icon :icon="['fas', 'trash']" class="stop"
+                                 @click="onProjectRemoveConfirm(getImageId(tmpList), getProjectName(tmpList))"/>
+            </el-tooltip>
           </span>
         </li>
         <li v-for="(item, idx) in tmpList" v-bind:key="idx">
@@ -100,11 +112,11 @@ import axios from "axios";
 import Header from "@/components/Header.vue";
 import {VideoPause, VideoPlay} from "@element-plus/icons-vue";
 import {library} from '@fortawesome/fontawesome-svg-core';
-import {faPause, faPlay, faStop, faTrash} from '@fortawesome/free-solid-svg-icons';
+import {faPause, faPlay, faRepeat, faStop, faTrash} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
 import {ElLoading, ElMessage} from "element-plus";
 
-library.add(faPlay, faStop, faPause, faTrash)
+library.add(faPlay, faStop, faPause, faTrash, faRepeat)
 
 export default {
   name: "host-list",
@@ -242,6 +254,7 @@ export default {
       return ''
     },
     onProjectStart(containerId, projectName) {
+      this.showLoading()
       axios.post('/project/start', {container_id: containerId, project_name: projectName,}, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -255,10 +268,12 @@ export default {
           ElMessage.error(response.data['msg'])
         }
       }).finally(() => {
+        this.loading.close()
         this.getVirtualHost()
       })
     },
     onProjectStop(containerId, projectName) {
+      this.showLoading()
       axios.post('/project/stop', {container_id: containerId, project_name: projectName,}, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -271,10 +286,13 @@ export default {
           ElMessage.error(response.data['msg'])
         }
       }).finally(() => {
+        this.dialogVisible = false
+        this.loading.close()
         this.getVirtualHost()
       })
     },
     onProjectRemove(containerId, projectName) {
+      this.showLoading()
       axios.post('/project/remove', {container_id: containerId, project_name: projectName,}, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -287,6 +305,8 @@ export default {
           ElMessage.error(response.data['msg'])
         }
       }).finally(() => {
+        this.dialogVisible = false
+        this.loading.close()
         this.getVirtualHost()
       })
     },
@@ -296,6 +316,32 @@ export default {
       this.dialogOnClick = () => {
         this.onProjectRemove(containerId, projectName)
       }
+    },
+    onProjectRebuildConfirm(containerId, projectName) {
+      this.dialogContent = '确定重建镜像吗？'
+      this.dialogVisible = true
+      this.dialogOnClick = () => {
+        this.onProjectRebuild(containerId, projectName)
+      }
+    },
+    onProjectRebuild(containerId, projectName) {
+      this.showLoading()
+      axios.post('/project/rebuild', {container_id: containerId, project_name: projectName,}, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }).then((response) => {
+        console.log('[data]', response)
+        if (response.data['code'] === 200) {
+          ElMessage({message: response.data['msg'], type: 'success',})
+        } else {
+          ElMessage.error(response.data['msg'])
+        }
+      }).finally(() => {
+        this.dialogVisible = false
+        this.loading.close()
+        this.getVirtualHost()
+      })
     },
   }
 }
@@ -358,7 +404,7 @@ export default {
 }
 
 .container li > span.p-image {
-  width: 200px;
+  width: 190px;
 }
 
 .container li > span.p-state {
@@ -367,7 +413,7 @@ export default {
 }
 
 .container li > span.p-ports {
-  width: 180px;
+  width: 160px;
 }
 
 .container li > span.p-status {
@@ -379,6 +425,9 @@ export default {
   color: #6b6969;
 }
 
+.container li > span.p-op svg {
+  margin: 0 6px 0 6px;
+}
 
 .stop {
   font-size: 20px;

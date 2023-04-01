@@ -75,6 +75,7 @@ func runServer() {
 	r.POST("/project/start", projectController.Start)
 	r.POST("/project/stop", projectController.Stop)
 	r.POST("/project/remove", projectController.Remove)
+	r.POST("/project/rebuild", projectController.Rebuild)
 
 	_ = r.Run(":8086")
 }

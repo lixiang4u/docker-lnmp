@@ -96,7 +96,7 @@ func (x ImageController) Run(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "镜像已经移除", "data": nil})
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": nil})
 	return
 	//		_, err := c.ContainerCreate(ctx, &containertypes.Config{Image: "busybox:latest"}, &containertypes.HostConfig{}, nil, &p, "")
 }

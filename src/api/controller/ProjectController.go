@@ -2,12 +2,16 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
 	"github.com/lixiang4u/docker-lnmp/model"
 	"github.com/lixiang4u/docker-lnmp/util"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"math/rand"
 	"net/http"
 )
 
@@ -131,4 +135,50 @@ func (x ContainerController) findContainersByProjectOrId(dockerClient *client.Cl
 		resultList = append(resultList, item)
 	}
 	return resultList, nil
+}
+
+func (x ContainerController) Rebuild(ctx *gin.Context) {
+	var containerId = ctx.PostForm("container_id")
+	var projectName = ctx.PostForm("project_name")
+
+	// 列出容器
+	var dClient = x.connect(ctx)
+	listSummary, err := x.findContainersByProjectOrId(dClient, projectName, containerId)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+		return
+	}
+
+	// 删除愿容器
+	for _, tmpContainer := range listSummary {
+		err := dClient.ContainerRemove(context.Background(), tmpContainer.Id, types.ContainerRemoveOptions{
+			Force: true,
+		})
+		if err != nil {
+			ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+			return
+		}
+	}
+
+	// 创建新容器
+	for _, tmpContainer := range listSummary {
+		// 		_, err := c.ContainerCreate(ctx, &containertypes.Config{Image: "busybox:latest"}, &containertypes.HostConfig{}, nil, &p, "")
+		_, err := dClient.ContainerCreate(
+			context.Background(),
+			&container.Config{
+				Image: tmpContainer.Image,
+			},
+			&container.HostConfig{},
+			&network.NetworkingConfig{},
+			&v1.Platform{},
+			fmt.Sprintf("%s-%d", tmpContainer.Name, rand.Intn(99)),
+		)
+		if err != nil {
+			ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": nil})
+	return
 }
