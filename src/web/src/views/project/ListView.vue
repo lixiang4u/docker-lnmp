@@ -58,8 +58,9 @@
             <el-tooltip placement="top" :content="item['state']">
               <font-awesome-icon v-if="item['state']==='exited'" :icon="['fas', 'pause']" class="stop"
                                  @click="start(item['id'])"/>
-              <font-awesome-icon v-if="item['state']==='running'" :icon="['fas', 'play']" class="start"
+              <font-awesome-icon v-else-if="item['state']==='running'" :icon="['fas', 'play']" class="start"
                                  @click="stop(item['id'])"/>
+              <span v-else>{{ item['state'] }}</span>
             </el-tooltip>
           </span>
           <span class="p-ports">
