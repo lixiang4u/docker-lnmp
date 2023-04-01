@@ -11,8 +11,8 @@ import (
 	"github.com/lixiang4u/docker-lnmp/model"
 	"github.com/lixiang4u/docker-lnmp/util"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"math/rand"
 	"net/http"
+	"path/filepath"
 )
 
 type ProjectController struct {
@@ -160,25 +160,42 @@ func (x ContainerController) Rebuild(ctx *gin.Context) {
 		}
 	}
 
+	var result string
 	// 创建新容器
 	for _, tmpContainer := range listSummary {
-		// 		_, err := c.ContainerCreate(ctx, &containertypes.Config{Image: "busybox:latest"}, &containertypes.HostConfig{}, nil, &p, "")
-		_, err := dClient.ContainerCreate(
-			context.Background(),
-			&container.Config{
-				Image: tmpContainer.Image,
-			},
-			&container.HostConfig{},
-			&network.NetworkingConfig{},
-			&v1.Platform{},
-			fmt.Sprintf("%s-%d", tmpContainer.Name, rand.Intn(99)),
-		)
-		if err != nil {
-			ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
-			return
+		if tmpContainer.Labels.Project == "" {
+			// 		_, err := c.ContainerCreate(ctx, &containertypes.Config{Image: "busybox:latest"}, &containertypes.HostConfig{}, nil, &p, "")
+			resp, err := dClient.ContainerCreate(
+				context.Background(),
+				&container.Config{
+					Image: tmpContainer.Image,
+				},
+				&container.HostConfig{},
+				&network.NetworkingConfig{},
+				&v1.Platform{},
+				tmpContainer.Name,
+			)
+			if err != nil {
+				ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+				return
+			}
+			result = fmt.Sprintf("[new container] %s", resp.ID)
+		} else {
+			bs, err := util.Exec(fmt.Sprintf(
+				"%s && %s && %s",
+				fmt.Sprintf("cd %s", filepath.Dir(tmpContainer.Labels.ConfigFile)),
+				"docker compose down",
+				fmt.Sprintf("docker compose -f %s up --force-recreate -d", tmpContainer.Labels.ConfigFile),
+			))
+			if err != nil {
+				ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+				return
+			}
+			result = string(bs)
+			break
 		}
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": nil})
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "ok", "data": result})
 	return
 }

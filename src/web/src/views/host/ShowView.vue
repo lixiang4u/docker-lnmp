@@ -88,6 +88,9 @@ export default {
       }).then((response) => {
         if (response.data['code'] === 200) {
           ElMessage({message: response.data['msg'], type: 'success',})
+          setTimeout(() => {
+            this.$router.push({name: 'projectList'})
+          }, 3000)
         } else {
           ElMessage.error(response.data['msg'])
         }
@@ -102,6 +105,9 @@ export default {
         console.log('[data]', response)
         if (response.data['code'] === 200) {
           ElMessage({message: response.data['msg'], type: 'success',})
+          setTimeout(() => {
+            this.$router.push({name: 'projectList'})
+          }, 3000)
         } else {
           ElMessage.error(response.data['msg'])
         }

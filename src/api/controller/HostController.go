@@ -22,7 +22,13 @@ type HostController struct {
 }
 
 func (x HostController) Init(ctx *gin.Context) {
-	var hosts []model.VirtualHost
+	err := x.initVirtualHost()
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+		return
+	}
+	var hosts = x.convertVirtualHost(viper.Get("hosts"))
+
 	var dc = x.updateVirtualHost(hosts)
 	out, err := yaml.Marshal(dc)
 	if err != nil {
@@ -239,10 +245,8 @@ func (x HostController) initConfig() model.DockerComposeTpl {
 		var nginxService = dc.Services["nginx"].(model.DockerComposeServiceTpl)
 		var pLog = fmt.Sprintf("%s:%s", filepath.Join(util.AppDirectory(), "dockerfile/nginx/log"), "/var/log/nginx")
 		var pConfig = fmt.Sprintf("%s:%s", filepath.Join(util.AppDirectory(), "dockerfile/nginx/config"), "/etc/nginx/conf.d")
-		var pWWW = fmt.Sprintf("%s:%s", filepath.Join(util.AppDirectory(), "dockerfile/nginx/html"), "/apps/www/default.me:ro,bind")
 		nginxService.Volumes = append(nginxService.Volumes, pLog)
 		nginxService.Volumes = append(nginxService.Volumes, pConfig)
-		nginxService.Volumes = append(nginxService.Volumes, pWWW)
 		// 将修改后的 nginxService 再赋回原来的 map 中
 		dc.Services["nginx"] = nginxService
 	}
