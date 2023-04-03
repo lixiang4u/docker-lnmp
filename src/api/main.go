@@ -1,12 +1,18 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"github.com/docker/docker/api/types"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/lixiang4u/docker-lnmp/config"
 	"github.com/lixiang4u/docker-lnmp/controller"
+	"github.com/lixiang4u/docker-lnmp/model"
 	"github.com/lixiang4u/docker-lnmp/util"
 	"github.com/urfave/cli/v2"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 )
@@ -20,6 +26,9 @@ func main() {
 				Aliases: []string{"s"},
 				Usage:   "run web server",
 				Action: func(ctx *cli.Context) error {
+					if err := checkService(); err != nil {
+						return err
+					}
 					runServer()
 					return nil
 				},
@@ -29,7 +38,9 @@ func main() {
 				Aliases: []string{"i"},
 				Usage:   "init environment",
 				Action: func(ctx *cli.Context) error {
-					//
+					if err := checkService(); err != nil {
+						return err
+					}
 					return nil
 				},
 			},
@@ -38,6 +49,51 @@ func main() {
 	if err := app.Run(os.Args); err != nil {
 		log.Fatalln(err)
 	}
+}
+
+func checkService() error {
+	log.Println("check docker-compose.yaml...")
+
+	// 连接docker服务
+	dClient, err := util.ConnectDocker()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = dClient.Close() }()
+
+	// 计算服务是否存在
+	listSummary, err := dClient.ContainerList(context.Background(), types.ContainerListOptions{All: true})
+	if err != nil {
+		return err
+	}
+	var resultList []model.Container
+	for _, item := range listSummary {
+		if item.Labels["com.docker.compose.project"] == "" {
+			continue
+		}
+		if item.Labels["com.docker.compose.project"] != config.AppName {
+			continue
+		}
+		resultList = append(resultList, model.Container{Id: item.ID, Name: item.Names[0]})
+	}
+	configFile := filepath.Join(util.AppDirectory(), "docker-compose.yaml")
+	log.Println("[configFile]", configFile)
+	if len(resultList) == 0 {
+		// 生成 docker-compose.yaml
+		err := new(controller.ComposeController).GenerateConfig(configFile)
+		if err != nil {
+			return err
+		}
+
+		// 运行docker compose up
+		log.Println(fmt.Sprintf("正在构建%s，稍等片刻...", config.AppName))
+		_, err = model.ComposeDownUp(configFile)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func runServer() {
@@ -56,6 +112,7 @@ func runServer() {
 	var imageController = new(controller.ImageController)
 	var projectController = new(controller.ProjectController)
 
+	r.NoRoute(func(ctx *gin.Context) { ctx.Redirect(http.StatusPermanentRedirect, "/") })
 	r.StaticFile("/", filepath.Join(util.AppDirectory(), "src/web/dist/index.html"))
 	r.Static("/assets", filepath.Join(util.AppDirectory(), "src/web/dist/assets"))
 

@@ -12,7 +12,6 @@ import (
 	"github.com/lixiang4u/docker-lnmp/util"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"net/http"
-	"path/filepath"
 )
 
 type ProjectController struct {
@@ -181,12 +180,7 @@ func (x ContainerController) Rebuild(ctx *gin.Context) {
 			}
 			result = fmt.Sprintf("[new container] %s", resp.ID)
 		} else {
-			bs, err := util.Exec(fmt.Sprintf(
-				"%s && %s && %s",
-				fmt.Sprintf("cd %s", filepath.Dir(tmpContainer.Labels.ConfigFile)),
-				"docker compose down",
-				fmt.Sprintf("docker compose -f %s up --force-recreate -d", tmpContainer.Labels.ConfigFile),
-			))
+			bs, err := model.ComposeDownUp(tmpContainer.Labels.ConfigFile)
 			if err != nil {
 				ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 				return

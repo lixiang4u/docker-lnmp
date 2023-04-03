@@ -66,11 +66,11 @@ import axios from "axios";
 import Header from "@/components/Header.vue";
 import {VideoPause, VideoPlay} from "@element-plus/icons-vue";
 import {library} from '@fortawesome/fontawesome-svg-core';
-import {faCircleInfo, faPause, faPlay, faStop, faRemove} from '@fortawesome/free-solid-svg-icons';
+import {faCircleInfo, faPause, faPlay, faRemove, faStop} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
 import {ElLoading, ElMessage} from "element-plus";
 
-library.add(faPlay, faStop, faPause, faCircleInfo,faRemove)
+library.add(faPlay, faStop, faPause, faCircleInfo, faRemove)
 
 export default {
   name: "host-list",
@@ -177,6 +177,9 @@ export default {
       ElMessage({message: '重构中', type: 'success',})
     },
     splitTag(tagName, idx) {
+      if (!tagName) {
+        return ''
+      }
       const tmpArr = tagName.split(':')
       if (tmpArr.length > 1) {
         return tmpArr[idx]

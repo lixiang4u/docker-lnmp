@@ -17,7 +17,10 @@ RUN npm run build
 
 COPY --from=stage1 apps/api/lnmp-cli ./dist
 
-ENTRYPOINT ["//apps/web/dist/lnmp-cli","s"]
+EXPOSE 80
+EXPOSE 443
+
+ENTRYPOINT ["/apps/web/dist/lnmp-cli","s"]
 
 
 

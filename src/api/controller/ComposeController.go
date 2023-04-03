@@ -8,8 +8,13 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
 	"github.com/lixiang4u/docker-lnmp/config"
+	"github.com/lixiang4u/docker-lnmp/model"
 	"github.com/lixiang4u/docker-lnmp/util"
+	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
+	"io/fs"
 	"net/http"
+	"os"
 )
 
 type ComposeController struct {
@@ -112,4 +117,27 @@ func (x ComposeController) Stop(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "容器已经停止", "data": nil})
 	return
+}
+
+func (x ComposeController) GenerateConfig(path string) error {
+	err := model.InitVirtualHostConfig()
+	if err != nil {
+		return err
+	}
+	hosts := model.ConvertToVirtualHost(viper.Get("hosts"))
+	dc := model.UpdateVirtualHost(hosts)
+	out, err := yaml.Marshal(dc)
+	if err != nil {
+		return err
+	}
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR|os.O_TRUNC, fs.ModePerm)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = file.Close() }()
+	_, err = file.Write(out)
+	if err != nil {
+		return err
+	}
+	return nil
 }

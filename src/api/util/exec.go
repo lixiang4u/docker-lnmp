@@ -1,7 +1,6 @@
 package util
 
 import (
-	"log"
 	"os/exec"
 	"runtime"
 )
@@ -15,7 +14,6 @@ func Exec(shString string) ([]byte, error) {
 		// 非 Windows 上的命令
 		cmd = exec.Command("sh", "-c", shString)
 	}
-	log.Println("[exec]", shString)
 
 	// 路径分隔符
 	//separator := string(os.PathSeparator)
