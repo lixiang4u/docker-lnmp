@@ -4,9 +4,11 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/lixiang4u/docker-lnmp/controller"
+	"github.com/lixiang4u/docker-lnmp/util"
 	"github.com/urfave/cli/v2"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -54,8 +56,8 @@ func runServer() {
 	var imageController = new(controller.ImageController)
 	var projectController = new(controller.ProjectController)
 
-	r.StaticFile("/", "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\src\\web\\dist\\index.html")
-	r.Static("/assets", "D:\\repo\\github.com\\lixiang4u\\docker-lnmp\\src\\web\\dist\\assets")
+	r.StaticFile("/", filepath.Join(util.AppDirectory(), "src/web/dist/index.html"))
+	r.Static("/assets", filepath.Join(util.AppDirectory(), "src/web/dist/assets"))
 
 	api := r.Group("/api")
 	api.GET("/host/init", hostController.Init)
@@ -67,6 +69,7 @@ func runServer() {
 
 	api.GET("/image/list", imageController.List)
 	api.DELETE("/image/remove/:id", imageController.Remove)
+	api.GET("/image/run/:id", imageController.Run)
 
 	api.GET("/container/list", containerController.List)
 	api.POST("/container/start/:id", containerController.Start)
