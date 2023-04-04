@@ -44,6 +44,7 @@ func InitComposeConfig() DockerComposeTpl {
 			"php": DockerComposeServiceTpl{
 				ContainerName: "lnmp-php72",
 				Build:         map[string]interface{}{"dockerfile": "common/script/lamp-php-fpm"},
+				Image:         "php-fpm:72",
 				Networks:      []string{"default-network"},
 				Volumes:       []string{},
 			},
