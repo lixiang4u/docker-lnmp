@@ -21,6 +21,7 @@ RUN npm run build
 
 COPY --from=stage1 /apps/lnmp-cli* .
 COPY ./common/ ./common
+RUN chmod +x ./common/script/entrypoint.sh
 
 ENTRYPOINT ["/bin/bash", "-c", "/apps/common/script/entrypoint.sh"]
 

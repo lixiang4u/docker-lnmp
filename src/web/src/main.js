@@ -6,7 +6,7 @@ import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 
 
-axios.defaults.baseURL = 'http://127.0.0.1:8086/api/';
+axios.defaults.baseURL = '/api/';
 axios.interceptors.request.use(config => {
     // console.log('[interceptors.config]', config);
     // 需要检查调用方有没有传params

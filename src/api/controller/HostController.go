@@ -108,7 +108,7 @@ func (x HostController) Update(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 	}
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "配置已经修改，请重启服务", "data": nil})
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "配置已经修改，请【重新构建】容器", "data": nil})
 }
 
 func (x HostController) Create(ctx *gin.Context) {
@@ -152,7 +152,7 @@ func (x HostController) Create(ctx *gin.Context) {
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 	}
-	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "配置已经添加，请重启服务", "data": nil})
+	ctx.JSON(http.StatusOK, gin.H{"code": 200, "msg": "配置已经添加，请【重新构建】容器", "data": nil})
 }
 
 func (x HostController) Delete(ctx *gin.Context) {
