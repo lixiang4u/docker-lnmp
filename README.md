@@ -14,3 +14,6 @@ docker run --rm -v /apps/repo/docker-lnmp:/home docker-lnmp:latest
 - 容器定义在 src/api/model/docker-compose.go
 - 虚拟主机配置变更后需要重建docker项目
 - 修改nginx/php等配置需要重构项目，不要再容器中直接更改，避免重构后丢失
+
+### 演示
+![screenshot.gif](./src/common/files/screenshot.gif)

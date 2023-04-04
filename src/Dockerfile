@@ -25,3 +25,4 @@ ENTRYPOINT ["/bin/bash", "-c", "/apps/common/script/entrypoint.sh"]
 
 # docker build --no-cache --tag docker-lnmp:latest .
 # docker run --rm -v E:\\d:/home docker-lnmp:latest
+
