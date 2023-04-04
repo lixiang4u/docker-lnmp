@@ -1,26 +1,28 @@
 FROM golang:latest AS stage1
-WORKDIR /apps/api/
+WORKDIR /apps/
 COPY ./api/go.mod ./
 COPY ./api/go.sum ./
 RUN go mod download
 COPY ./api/ ./
-RUN go build -o lnmp-cli .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lnmp-cli-linux64 . && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=386 go build -o lnmp-cli-linux . && \
+    CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o lnmp-cli-win64.exe . && \
+    CGO_ENABLED=0 GOOS=windows GOARCH=386 go build -o lnmp-cli-win.exe . && \
+    CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o lnmp-cli-darwin64
 
 
 FROM node:latest
-WORKDIR /apps/web/
+WORKDIR /apps/
 COPY ./web/package.json ./
 COPY ./web/package-lock.json ./
 RUN npm install
 COPY ./web/ ./
 RUN npm run build
 
-COPY --from=stage1 apps/api/lnmp-cli ./dist
+COPY --from=stage1 /apps/lnmp-cli* .
+COPY ./common/ ./common
 
-EXPOSE 80
-EXPOSE 443
+ENTRYPOINT ["/bin/bash", "-c", "/apps/common/script/entrypoint.sh"]
 
-ENTRYPOINT ["/apps/web/dist/lnmp-cli","s"]
-
-
-
+# docker build --no-cache --tag docker-lnmp:latest .
+# docker run --rm -v E:\\d:/home docker-lnmp:latest
