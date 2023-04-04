@@ -33,7 +33,7 @@ func AppDirectory() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Dir(filepath.Dir(dir))
+	return dir
 }
 
 func DockerLogFormat(s string) []string {

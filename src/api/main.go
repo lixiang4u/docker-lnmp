@@ -12,12 +12,12 @@ import (
 	"github.com/lixiang4u/docker-lnmp/util"
 	"github.com/urfave/cli/v2"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 )
 
 func main() {
+	log.Println("[AppDirectory]", util.AppDirectory())
 
 	app := &cli.App{
 		Commands: []*cli.Command{
@@ -112,12 +112,14 @@ func runServer() {
 	var imageController = new(controller.ImageController)
 	var projectController = new(controller.ProjectController)
 
-	r.NoRoute(func(ctx *gin.Context) { ctx.Redirect(http.StatusPermanentRedirect, "/") })
-	r.StaticFile("/", filepath.Join(util.AppDirectory(), "src/web/dist/index.html"))
-	r.Static("/assets", filepath.Join(util.AppDirectory(), "src/web/dist/assets"))
+	r.NoRoute(func(ctx *gin.Context) {
+		log.Println("[404]", ctx.Request.URL.String())
+	})
+	r.StaticFile("/", filepath.Join(util.AppDirectory(), "dist/index.html"))
+	r.Static("/assets", filepath.Join(util.AppDirectory(), "dist/assets"))
 
 	api := r.Group("/api")
-	api.GET("/host/init", hostController.Init)
+	//api.GET("/host/init", hostController.Init)
 	api.GET("/host/list", hostController.List)
 	api.GET("/host/show/:id", hostController.Show)
 	api.POST("/host/create", hostController.Create)

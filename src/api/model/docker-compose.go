@@ -43,7 +43,7 @@ func InitComposeConfig() DockerComposeTpl {
 			},
 			"php": DockerComposeServiceTpl{
 				ContainerName: "lnmp-php72",
-				Build:         map[string]interface{}{"dockerfile": "dockerfile/script/lamp-php-fpm"},
+				Build:         map[string]interface{}{"dockerfile": "common/script/lamp-php-fpm"},
 				Networks:      []string{"default-network"},
 				Volumes:       []string{},
 			},
@@ -80,8 +80,8 @@ func InitComposeConfig() DockerComposeTpl {
 
 	if _, ok := dc.Services["nginx"]; ok {
 		var nginxService = dc.Services["nginx"].(DockerComposeServiceTpl)
-		var pLog = fmt.Sprintf("%s:%s", filepath.Join(util.AppDirectory(), "dockerfile/nginx/log"), "/var/log/nginx")
-		var pConfig = fmt.Sprintf("%s:%s", filepath.Join(util.AppDirectory(), "dockerfile/nginx/config"), "/etc/nginx/conf.d")
+		var pLog = fmt.Sprintf("%s:%s", filepath.Join(util.AppDirectory(), "common/nginx/log"), "/var/log/nginx")
+		var pConfig = fmt.Sprintf("%s:%s", filepath.Join(util.AppDirectory(), "common/nginx/config"), "/etc/nginx/conf.d")
 		nginxService.Volumes = append(nginxService.Volumes, pLog)
 		nginxService.Volumes = append(nginxService.Volumes, pConfig)
 		// 将修改后的 nginxService 再赋回原来的 map 中

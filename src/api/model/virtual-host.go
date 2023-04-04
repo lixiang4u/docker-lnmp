@@ -35,15 +35,14 @@ func InitVirtualHostConfig() error {
 	if err != nil {
 		_ = file.Truncate(0)
 		_, _ = file.WriteString("{}")
-		log.Fatalln("[viper.ReadConfig error]", err.Error())
-		return err
+		return InitVirtualHostConfig()
 	}
 	var hosts = []VirtualHost{
 		{
 			Id:      util.StringHash("default.me"),
 			Name:    "default",
 			Domain:  "default.me",
-			Root:    filepath.Join(util.AppDirectory(), "dockerfile/nginx/html"),
+			Root:    filepath.Join(util.AppDirectory(), "common/nginx/html"),
 			WebRoot: "",
 			Port:    0,
 		},
@@ -102,7 +101,7 @@ func UpdateVirtualHost(hosts []VirtualHost) DockerComposeTpl {
 			var pWWW = fmt.Sprintf(
 				"%s:%s",
 				host.Root,
-				fmt.Sprintf("/apps/www/%s:ro,bind", host.Domain),
+				fmt.Sprintf("/apps/www/%s:bind", host.Domain),
 			)
 			phpService.Volumes = append(phpService.Volumes, pWWW)
 			// 将修改后的 nginxService 再赋回原来的 map 中
@@ -117,7 +116,7 @@ func UpdateVirtualHost(hosts []VirtualHost) DockerComposeTpl {
 }
 
 func updateNginxVirtualHostConfig(host VirtualHost) {
-	p, err := parser.NewParser(filepath.Join(util.AppDirectory(), "dockerfile/nginx/config/default.tpl"))
+	p, err := parser.NewParser(filepath.Join(util.AppDirectory(), "common/nginx/config/default.tpl"))
 	if err != nil {
 		log.Fatalln("[parser.NewParser error]", err.Error())
 		return
@@ -140,7 +139,7 @@ func updateNginxVirtualHostConfig(host VirtualHost) {
 	// golang中使用filepath 生成linux中的目录路径
 	var pConfig = filepath.Join(
 		util.AppDirectory(),
-		"dockerfile/nginx/config",
+		"common/nginx/config",
 		fmt.Sprintf("%s.conf", host.Domain),
 	)
 	file, err := os.OpenFile(pConfig, os.O_CREATE|os.O_RDWR|os.O_TRUNC, fs.ModePerm)
