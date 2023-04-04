@@ -180,7 +180,20 @@ func (x ContainerController) Rebuild(ctx *gin.Context) {
 			}
 			result = fmt.Sprintf("[new container] %s", resp.ID)
 		} else {
-			bs, err := model.ComposeDownUp(tmpContainer.Labels.ConfigFile)
+			_, err := model.ComposeDown(tmpContainer.Labels.ConfigFile)
+			if err != nil {
+				ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+				return
+			}
+
+			// 生成 docker-compose.yaml
+			err = new(ComposeController).GenerateConfig(tmpContainer.Labels.ConfigFile)
+			if err != nil {
+				ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
+				return
+			}
+
+			bs, err := model.ComposeUp(tmpContainer.Labels.ConfigFile)
 			if err != nil {
 				ctx.JSON(http.StatusOK, gin.H{"code": 500, "msg": err.Error(), "data": nil})
 				return

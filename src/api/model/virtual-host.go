@@ -90,7 +90,7 @@ func UpdateVirtualHost(hosts []VirtualHost) DockerComposeTpl {
 			var nginxService = dc.Services["nginx"].(DockerComposeServiceTpl)
 			var pWWW = fmt.Sprintf(
 				"%s:%s",
-				filepath.Join(util.AppDirectory(), "dockerfile/nginx/html"),
+				host.Root,
 				fmt.Sprintf("/apps/www/%s:ro,bind", host.Domain),
 			)
 			nginxService.Volumes = append(nginxService.Volumes, pWWW)
@@ -101,7 +101,7 @@ func UpdateVirtualHost(hosts []VirtualHost) DockerComposeTpl {
 			var phpService = dc.Services["php"].(DockerComposeServiceTpl)
 			var pWWW = fmt.Sprintf(
 				"%s:%s",
-				filepath.Join(util.AppDirectory(), "dockerfile/nginx/html"),
+				host.Root,
 				fmt.Sprintf("/apps/www/%s:ro,bind", host.Domain),
 			)
 			phpService.Volumes = append(phpService.Volumes, pWWW)

@@ -91,6 +91,22 @@ func InitComposeConfig() DockerComposeTpl {
 	return dc
 }
 
+func ComposeDown(configFile string) ([]byte, error) {
+	return util.Exec(fmt.Sprintf(
+		"%s && %s",
+		fmt.Sprintf("cd %s", filepath.Dir(configFile)),
+		"docker compose down",
+	))
+}
+
+func ComposeUp(configFile string) ([]byte, error) {
+	return util.Exec(fmt.Sprintf(
+		"%s && %s",
+		fmt.Sprintf("cd %s", filepath.Dir(configFile)),
+		fmt.Sprintf("docker compose -f %s up --force-recreate -d", configFile),
+	))
+}
+
 func ComposeDownUp(configFile string) ([]byte, error) {
 	return util.Exec(fmt.Sprintf(
 		"%s && %s && %s",
