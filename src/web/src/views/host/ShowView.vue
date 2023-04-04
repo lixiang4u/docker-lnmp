@@ -32,6 +32,39 @@
 
       </el-form>
     </div>
+
+    <el-dialog v-model="dialogVisible" title="选择目录" draggable>
+      {{ form.selectedFile }}
+      <el-form :model="form" class="file-list">
+        <ul>
+          <li>
+            <span class="checkbox"></span>
+            <span class="name">文件名</span>
+            <span class="modify-time">修改时间</span>
+            <span class="permission">权限</span>
+          </li>
+          <li v-for="(item, idx) in fileList" v-bind:key="idx">
+            <span class="checkbox">
+              <el-checkbox-group v-model="form.selectedFile">
+                <el-checkbox label="" name="type"/>
+              </el-checkbox-group>
+            </span>
+            <span class="name">{{ item.name }}</span>
+            <span class="modify-time">{{ formatTime(item.time) }}</span>
+            <span class="permission">{{ item.perm }}</span>
+          </li>
+        </ul>
+      </el-form>
+      <template #footer>
+      <span class="dialog-footer">
+        <el-button @click="dialogVisible = false">Cancel</el-button>
+        <el-button type="primary" @click="dialogVisible = false">
+          Confirm
+        </el-button>
+      </span>
+      </template>
+    </el-dialog>
+
   </div>
 </template>
 <script>
@@ -113,12 +146,60 @@ export default {
         }
       })
     },
+    formatTime(timestamp) {
+      return (new Date(timestamp * 1000).toLocaleString());
+    },
+    onSelectPath() {
+      console.log('[onSelectPath]')
+      this.dialogVisible = true
+    },
+    getFiles(root) {
+      axios.get('/file/list?path=' + root).then((response) => {
+        console.log('[data]', response)
+        if (response.data['code'] === 200) {
+          // this.fileList = response.data['data']
+        }
+      })
+    },
   }
 }
 </script>
 <style scoped>
 .form {
   padding-top: 40px;
+}
+
+.file-list ul {
+  padding-left: 0;
+  margin-top: -10px;
+}
+
+.file-list li {
+  list-style-type: none;
+  flex-wrap: nowrap;
+  border-bottom: 1px solid #e8e8e8;
+  padding: 16px 16px 16px 16px;
+
+}
+
+.file-list li > span {
+  display: inline-block;
+}
+
+.file-list .checkbox {
+  width: 32px;
+}
+
+.file-list .name {
+  width: 220px;
+}
+
+.file-list .modify-time {
+  width: 180px;
+}
+
+.file-list .permission {
+  width: 50px;
 }
 
 </style>

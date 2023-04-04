@@ -37,7 +37,7 @@ func (x FileController) List(ctx *gin.Context) {
 			"path":   path,
 			"name":   d.Name(),
 			"is_dir": d.IsDir(),
-			"mode":   fi.Mode(),
+			"perm":   fi.Mode().Perm(),
 			"time":   fi.ModTime().Unix(),
 			"size":   fi.Size(),
 		})
