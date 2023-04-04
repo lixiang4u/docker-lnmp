@@ -1,7 +1,6 @@
 FROM golang:latest AS stage1
 WORKDIR /apps/
 COPY ./api/go.mod ./
-COPY ./api/go.sum ./
 RUN go mod download
 COPY ./api/ ./
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lnmp-cli-linux64 . && \
@@ -14,7 +13,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lnmp-cli-linux64 . && \
 FROM node:latest
 WORKDIR /apps/
 COPY ./web/package.json ./
-COPY ./web/package-lock.json ./
 RUN npm install
 COPY ./web/ ./
 RUN npm run build

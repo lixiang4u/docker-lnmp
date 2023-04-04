@@ -20,12 +20,6 @@ import (
 type ComposeController struct {
 }
 
-// docker-compose.yaml 文件路径
-// 状态查看
-// 		当前compose中
-
-// docker container ls 列出容器，遍历出 Label.com.docker.compose.project 同名的容器列表 即为当前分组
-
 func (x ComposeController) connect(ctx *gin.Context) *client.Client {
 	_clientInstance, err := util.ConnectDocker()
 	if err != nil {
