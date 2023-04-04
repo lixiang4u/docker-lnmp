@@ -111,6 +111,7 @@ func runServer() {
 	var containerController = new(controller.ContainerController)
 	var imageController = new(controller.ImageController)
 	var projectController = new(controller.ProjectController)
+	var fileController = new(controller.FileController)
 
 	r.NoRoute(func(ctx *gin.Context) {
 		log.Println("[404]", ctx.Request.URL.String())
@@ -142,6 +143,8 @@ func runServer() {
 	api.POST("/project/stop", projectController.Stop)
 	api.POST("/project/remove", projectController.Remove)
 	api.POST("/project/rebuild", projectController.Rebuild)
+
+	api.GET("/file/list", fileController.List)
 
 	_ = r.Run(":8086")
 }
