@@ -72,7 +72,7 @@
             <el-tooltip placement="top" :content="item['status']">{{ (item['status']) }}</el-tooltip>
           </span>
           <span class="p-op">
-            [<el-link type="warning" :href="'/container/logs/'+item['id']">日志</el-link>]
+            [<el-link type="warning" :href="'/container/logs/'+item['id']" target="_blank">日志</el-link>]
             [<el-link type="danger" href="#">删除</el-link>]
           </span>
         </li>

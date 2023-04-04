@@ -114,7 +114,7 @@ func runServer() {
 	var fileController = new(controller.FileController)
 
 	r.NoRoute(func(ctx *gin.Context) {
-		log.Println("[404]", ctx.Request.URL.String())
+		ctx.File(filepath.Join(util.AppDirectory(), "dist/index.html"))
 	})
 	r.StaticFile("/", filepath.Join(util.AppDirectory(), "dist/index.html"))
 	r.Static("/assets", filepath.Join(util.AppDirectory(), "dist/assets"))
