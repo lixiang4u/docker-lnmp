@@ -19,10 +19,10 @@
           <el-input v-model="hostInfo.domain" placeholder="请填写站点域名，如：api.localhost.me"/>
         </el-form-item>
         <el-form-item label="项目路径：">
-          <el-input v-model="hostInfo.root" placeholder="请填写站点域名，如：/path/to/project/root"/>
+          <el-input v-model="hostInfo.root" placeholder="请填写站点域名，如：/path/to/project/root" @click="onSelectPath(hostInfo.root)" />
         </el-form-item>
         <el-form-item label="web路径：">
-          <el-input v-model="hostInfo.web_root" placeholder="请填写站点域名，如：/" />
+          <el-input v-model="hostInfo.web_root" placeholder="请填写站点域名，如：/" :value="hostInfo.web_root??'/'"/>
         </el-form-item>
 
         <el-form-item>
@@ -34,22 +34,34 @@
     </div>
 
     <el-dialog v-model="dialogVisible" title="选择目录" draggable>
-      {{ form.selectedFile }}
-      <el-form :model="form" class="file-list">
+      <div class="current-root">
+        <font-awesome-icon :icon="['fas', 'folder']"/>&nbsp;
+        <span v-for="(item,idx) in crumbs" v-bind:key="idx">
+          <span class="crumb" @click="onSelectFolder(item['path'],true)">
+            {{ item['base'] != '/' ? item['base'] : '' }}
+        </span>/</span>
+      </div>
+      <el-form class="file-list">
         <ul>
           <li>
-            <span class="checkbox"></span>
+            <span class="checkbox">#</span>
             <span class="name">文件名</span>
             <span class="modify-time">修改时间</span>
             <span class="permission">权限</span>
           </li>
           <li v-for="(item, idx) in fileList" v-bind:key="idx">
             <span class="checkbox">
-              <el-checkbox-group v-model="form.selectedFile">
-                <el-checkbox label="" name="type"/>
+              <el-checkbox-group>
+                <input type="checkbox" :name="item.path" v-model="item.checked" @click="onFileSelected(item.path)" :disabled="!item.is_dir">
               </el-checkbox-group>
             </span>
-            <span class="name">{{ item.name }}</span>
+            <span class="name">
+              <font-awesome-icon :icon="['fas', 'folder']" v-if="item.is_dir"/>
+              <font-awesome-icon :icon="['fas', 'file']" v-else/>&nbsp;
+              <span @click="onSelectFolder(item.path, item.is_dir)" :class="item.is_dir?'dir':'file'">
+                {{ item.name }}
+              </span>
+            </span>
             <span class="modify-time">{{ formatTime(item.time) }}</span>
             <span class="permission">{{ item.perm }}</span>
           </li>
@@ -57,10 +69,8 @@
       </el-form>
       <template #footer>
       <span class="dialog-footer">
-        <el-button @click="dialogVisible = false">Cancel</el-button>
-        <el-button type="primary" @click="dialogVisible = false">
-          Confirm
-        </el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="dialogVisible = false; hostInfo.root = selectedRoot;">选择</el-button>
       </span>
       </template>
     </el-dialog>
@@ -72,18 +82,30 @@ import axios from "axios";
 import {ElMessage} from 'element-plus'
 import Header from "@/components/Header.vue";
 
+import {library} from '@fortawesome/fontawesome-svg-core';
+import {faFile, faFolder} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/vue-fontawesome';
+
+library.add(faFile, faFolder)
+
 export default {
   name: "host-list",
   data() {
     return {
+      root: '',
+      crumbs: [],
+      fileList: [],
       hostInfo: {},
       isCreate: false,
       isUpdate: false,
+      dialogVisible: false,
+      selectedRoot: '',
     }
   },
   components: {
     // eslint-disable-next-line vue/no-reserved-component-names
-    Header
+    Header,
+    'font-awesome-icon': FontAwesomeIcon,
   },
   created() {
   },
@@ -149,17 +171,37 @@ export default {
     formatTime(timestamp) {
       return (new Date(timestamp * 1000).toLocaleString());
     },
-    onSelectPath() {
+    onSelectPath(path) {
       console.log('[onSelectPath]')
       this.dialogVisible = true
+      this.getFiles(path ?? '')
     },
     getFiles(root) {
       axios.get('/file/list?path=' + root).then((response) => {
         console.log('[data]', response)
         if (response.data['code'] === 200) {
-          // this.fileList = response.data['data']
+          this.fileList = response.data['data']['files']
+          this.root = response.data['data']['root']
+          this.crumbs = response.data['data']['crumbs']
         }
       })
+    },
+    onFileSelected(path) {
+      for (const key in this.fileList) {
+        if (this.fileList[key].path !== path) {
+          this.fileList[key].checked = false
+        } else {
+          this.fileList[key].checked = true
+          console.log('[selected]', path)
+          this.selectedRoot = path
+        }
+      }
+    },
+    onSelectFolder(path, isDir = false) {
+      if (isDir === false) {
+        return
+      }
+      this.getFiles(path)
     },
   }
 }
@@ -169,9 +211,19 @@ export default {
   padding-top: 40px;
 }
 
+.current-root {
+  margin: -10px 15px 0 15px;
+  line-height: 180%;
+}
+
+.current-root .crumb {
+  color: #337ecc;
+  cursor: pointer;
+}
+
 .file-list ul {
   padding-left: 0;
-  margin-top: -10px;
+  /*margin-top: -10px;*/
 }
 
 .file-list li {
@@ -187,11 +239,15 @@ export default {
 }
 
 .file-list .checkbox {
-  width: 32px;
+  width: 40px;
 }
 
 .file-list .name {
-  width: 220px;
+  width: 260px;
+}
+
+.file-list .name .dir {
+  cursor: pointer;
 }
 
 .file-list .modify-time {

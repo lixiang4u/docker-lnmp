@@ -47,7 +47,28 @@ func (x FileController) List(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"code": 200,
 		"msg":  nil,
-		"data": files,
-		"root": root,
+		"data": gin.H{
+			"root":   root,
+			"files":  files,
+			"crumbs": x.pathToCrumbs(root),
+		},
 	})
+}
+
+func (x FileController) pathToCrumbs(root string) []gin.H {
+	var result []gin.H
+	for {
+		if root == "/" {
+			break
+		}
+
+		result = append([]gin.H{{
+			"path": root,
+			"base": filepath.Base(root),
+		}}, result...)
+
+		root = filepath.Dir(root)
+	}
+
+	return result
 }
