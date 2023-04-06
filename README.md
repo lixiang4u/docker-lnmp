@@ -1,5 +1,5 @@
 
-### 编译启动
+### 编译
 ```code
 mkdir -p /apps/repo
 cd /apps/repo
@@ -9,6 +9,11 @@ cd docker-lnmp/src/
 docker build --no-cache --tag docker-lnmp:latest .
 docker run --rm -v /apps/repo/docker-lnmp:/home docker-lnmp:latest
 ```
+
+### 启动
+- 执行```/apps/repo/docker-lnmp```目录导出的```lnmp-cli```可执行文件启动web服务
+- 访问```http://localhost:8086```
+
 
 ### 说明
 - 容器定义在 src/api/model/docker-compose.go
