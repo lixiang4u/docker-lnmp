@@ -56,6 +56,7 @@ func InitComposeConfig() DockerComposeTpl {
 				Volumes: []string{
 					"default_mariadb_data:/var/lib/mysql",
 				},
+				Ports: []string{"3306:3306"},
 			},
 			"redis": DockerComposeServiceTpl{
 				ContainerName: "lnmp-redis",
@@ -64,6 +65,7 @@ func InitComposeConfig() DockerComposeTpl {
 				Volumes: []string{
 					"default_redis_data:/data",
 				},
+				Ports: []string{"6379:6379"},
 			},
 			"phpmyadmin": DockerComposeServiceTpl{
 				ContainerName: "lnmp-sql-admin",

@@ -7,7 +7,8 @@ server {
 
     location / {
         #root   /usr/share/nginx/html;
-        index  index.html index.htm;
+        index  index.php index.html index.htm;
+        try_files $uri $uri/ /index.php$is_args$args;
     }
 
     #error_page  404              /404.html;
