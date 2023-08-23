@@ -24,5 +24,6 @@ RUN chmod +x ./common/script/entrypoint.sh
 ENTRYPOINT ["/bin/bash", "-c", "/apps/common/script/entrypoint.sh"]
 
 # docker build --no-cache --tag docker-lnmp:latest .
-# docker run --rm -v E:\\d:/home docker-lnmp:latest
 
+# docker run --rm -v D:\\data\\docker\\docker-lnmp:/home docker-lnmp:latest
+# docker run --rm -v /apps/repo/docker-lnmp:/home        docker-lnmp:latest

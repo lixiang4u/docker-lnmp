@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 cp /apps/lnmp-cli* /home
 cp -R /apps/dist /home
