@@ -1,6 +1,7 @@
 FROM golang:latest AS stage1
 WORKDIR /apps/
 COPY ./api/go.mod ./
+RUN go env -w GOPROXY=https://goproxy.io,direct
 RUN go mod download
 COPY ./api/ ./
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o lnmp-cli-linux64 . && \
